@@ -3,19 +3,16 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
-use App\Models\Event;
 use Illuminate\Http\Request;
-use Illuminate\Support\Carbon;
-use Illuminate\Support\Facades\File;
 
-class EventsController extends Controller
+class PostalController extends Controller
 {
     /**
      * Display a listing of the resource.
      */
     public function index()
     {
-        return response()->json(Event::all()->reverse());
+        //
     }
 
     /**
@@ -64,19 +61,5 @@ class EventsController extends Controller
     public function destroy(string $id)
     {
         //
-    }
-    public function shorts()
-    {
-        return response()->json(Event::with('location')->where('event_begin','>',Carbon::now())->limit(3)->get());
-    }
-
-    public function getEventImages()
-    {
-        $images = File::files(storage_path('app/public/images/events'));
-        $imageUrls = array_map(function ($image) {
-            return asset('storage/images/events/' . $image->getFilename());
-        }, $images);
-
-        return response()->json($imageUrls);
     }
 }
