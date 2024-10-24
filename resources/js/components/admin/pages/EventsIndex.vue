@@ -23,7 +23,7 @@
 </template>
 <script>
 import axios from "axios";
-import ModalComponent from './CreateEventModal.vue';
+import ModalComponent from '../modals/CreateEvent.vue';
 export default {
     name: "AdminEventsIndex",
     components: {

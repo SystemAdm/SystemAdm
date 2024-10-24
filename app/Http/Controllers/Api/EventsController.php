@@ -72,6 +72,12 @@ class EventsController extends Controller
 
     public function getEventImages()
     {
+        if (!File::exists(storage_path('app/public/images'))) {
+            File::makeDirectory(storage_path('app/public/images'));
+        }
+        if (!File::exists(storage_path('app/public/images/events'))) {
+            File::makeDirectory(storage_path('app/public/images/events'));
+        }
         $images = File::files(storage_path('app/public/images/events'));
         $imageUrls = array_map(function ($image) {
             return asset('storage/images/events/' . $image->getFilename());

@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Event;
+use App\Models\User;
 use Illuminate\Http\Request;
 
 class EventsController extends Controller
@@ -13,8 +14,7 @@ class EventsController extends Controller
      */
     public function index()
     {
-        $events = Event::withTrashed()->with('location')->get();
-        return $events;
+        return Event::withTrashed()->with('location')->orderBy('event_begin','desc')->get();
     }
 
     /**
