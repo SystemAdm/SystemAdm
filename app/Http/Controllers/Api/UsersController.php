@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\Email;
 use App\Models\Phone;
+use App\Models\User;
 use Illuminate\Http\Request;
 use libphonenumber\PhoneNumberUtil;
 
@@ -38,7 +39,22 @@ class UsersController extends Controller
      */
     public function store(Request $request)
     {
-        //
+        $validated = $request->validate([
+            'firstname' => ['required', 'min:2', 'max:32'],
+            'middlename' => ['nullable', 'min:2', 'max:32'],
+            'lastname' => ['required', 'min:2', 'max:32'],
+            'phone' => 'required',
+        ]);
+        $phoneUtil = $this->phoneUtil->parse($validated['phone'], 'NO');
+        $phone = Phone::firstOrCreate(['country' => $phoneUtil->getCountryCode(), 'number' => $phoneUtil->getNationalNumber(), 'primary' => true]);
+        $user = new User(['first_name' => $validated['firstname'], 'middle_name' => $validated['middlename'], 'last_name' => $validated['lastname']]);
+        $user->save();
+        setPermissionsTeamId(1);
+        $user->assignRole(6);
+        $user->phones()->attach($phone);
+        return response()->json($user);
+
+        //return User::with('phones')->find(8);
     }
 
     /**
@@ -73,6 +89,19 @@ class UsersController extends Controller
         //
     }
 
+    public function findByPhone(Request $request)
+    {
+        $validated = $request->validate(['phone' => 'required']);
+        $parsed = $this->phoneUtil->parse($validated['phone'], 'NO');
+        if ($this->phoneUtil->isValidNumber($parsed)) {
+            $phone = Phone::with('users')->where('number', $parsed->getNationalNumber())->where('country', $parsed->getCountryCode())->first();
+            if ($phone->users()->count() > 0) {
+                return response()->json($phone->users()->get());
+            }
+        }
+        return response()->json(null, 404);
+    }
+
     public function validatePhone(Request $request)
     {
         $validated = $request->validate(['phone' => 'required']);
@@ -102,7 +131,7 @@ class UsersController extends Controller
         $domain = substr($domainPart, 0, $lastDotPos); // Domain part before the last dot
         $tld = substr($domainPart, $lastDotPos + 1); // TLD (part after the last dot)
 
-        $email = Email::with('users')->where('name',$name)->where('domain',$domain)->where('tld',$tld)->first();
+        $email = Email::with('users')->where('name', $name)->where('domain', $domain)->where('tld', $tld)->first();
         if ($email && $email->users->count() > 0) {
             return response()->json($email->users);
         }

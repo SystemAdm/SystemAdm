@@ -211,7 +211,7 @@ export default {
     name: 'SignupPage',
     data() {
         return {
-            step: 1,
+            step: 0,
             firstname: null,
             middlename: null,
             lastname: null,
@@ -222,6 +222,9 @@ export default {
                 email_confirm: false,
                 password: false,
                 password_confirm: false,
+                firstname: false,
+                lastname: false,
+                middlename: false,
             },
             names: {
                 0: {name: 'Anita Skorgan', id: 0},
@@ -234,6 +237,7 @@ export default {
             email_confirm: null,
             password: null,
             password_confirm: null,
+            name:null,
         }
     },
     methods: {
@@ -273,6 +277,24 @@ export default {
                 // TODO
             }
             if (this.step === 2) {
+                if (this.firstname == null || this.firstname === '') {
+                    this.error.firstname = 'Firstname is required';
+                } else if (this.firstname.length < 2) {
+                    this.error.firstname = 'Firstname must contain more than 2 characters';
+                }
+                if (this.lastname == null || this.lastname === '') {
+                    this.error.lastname = 'Lastname is required';
+                } else if (this.lastname.length < 2) {
+                    this.error.lastname = 'Lastname must contain more than 2 characters';
+                }
+                if (this.middlename != null && this.middlename !== '') {
+                    if (this.middlename.length <2) {
+                        this.error.middlename = 'Middlename must contain more than 2 characters';
+                    }
+                }
+                if (!this.error.firstname || !this.error.firstname || !this.error.middlename) {
+                    this.step++;
+                }
                 // TODO
             }
             if (this.step === 1) {

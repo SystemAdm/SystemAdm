@@ -1,6 +1,7 @@
 <template>
     <button
-        class="lg:inline-block py-2 px-6 bg-blue-500 hover:bg-blue-600 text-sm text-white font-bold rounded-xl transition duration-200" @click="openModal">
+        class="lg:inline-block py-2 px-6 bg-blue-500 hover:bg-blue-600 text-sm text-white font-bold rounded-xl transition duration-200"
+        @click="openModal">
         New Event
     </button>
     <table class="table table-striped">
@@ -11,28 +12,29 @@
         </thead>
         <tbody>
         <tr v-for="event in events" :key="event.id">
-            <td>{{event.id}}</td>
-          <td>{{event.title}}</td>
-          <td>{{event.event_begin_date}}</td>
-          <td>{{event.event_end_date}}</td>
-          <td>{{event.seats_available}}</td>
+            <td>{{ event.id }}</td>
+            <td>{{ event.title }}</td>
+            <td>{{ event.event_begin_date }}</td>
+            <td>{{ event.event_end_date }}</td>
+            <td>{{ event.seats_available }}</td>
         </tr>
         </tbody>
     </table>
-    <ModalComponent v-model="showModal" />
+    <CreateEvent :modalOpen="modalOpen" @update:created="fetch" @update:modalOpen="modalOpen = $event"/>
 </template>
 <script>
 import axios from "axios";
-import ModalComponent from '../modals/CreateEvent.vue';
+import CreateEvent from '../modals/CreateEvent.vue';
+
 export default {
     name: "AdminEventsIndex",
     components: {
-        ModalComponent
+        CreateEvent
     },
     data() {
         return {
             loading: true,
-            showModal: false,
+            modalOpen: false,
             events: []
         }
     },
@@ -44,7 +46,7 @@ export default {
             this.loading = false;
         },
         openModal() {
-            this.showModal = true;
+            this.modalOpen = true;
         }
     },
     mounted() {

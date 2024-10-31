@@ -4,8 +4,8 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\Event;
+use App\Models\User;
 use Illuminate\Http\Request;
-use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\File;
 
 class EventsController extends Controller
@@ -15,7 +15,8 @@ class EventsController extends Controller
      */
     public function index()
     {
-        return response()->json(Event::all()->reverse());
+        $events = Event::with('location')->orderBy('event_begin','desc')->get();
+        return response()->json($events);
     }
 
     /**
@@ -67,7 +68,8 @@ class EventsController extends Controller
     }
     public function shorts()
     {
-        return response()->json(Event::with('location')->where('event_begin','>',Carbon::now())->limit(3)->get());
+        //return response()->json(Event::with('location')->where('event_begin','>',Carbon::now())->limit(3)->get());
+        return response()->json(Event::with('location')->where('planning',false)->orderBy('event_begin','DESC')->limit(3)->get());
     }
 
     public function getEventImages()
@@ -78,11 +80,33 @@ class EventsController extends Controller
         if (!File::exists(storage_path('app/public/images/events'))) {
             File::makeDirectory(storage_path('app/public/images/events'));
         }
+
         $images = File::files(storage_path('app/public/images/events'));
-        $imageUrls = array_map(function ($image) {
-            return asset('storage/images/events/' . $image->getFilename());
+
+        $imageDetails = array_map(function ($image) {
+            return [
+                'name' => $image->getFilename(),
+                'url' => asset('storage/images/events/' . $image->getFilename()),
+            ];
         }, $images);
 
-        return response()->json($imageUrls);
+        return response()->json($imageDetails);
+    }
+
+    public function register(Request $request,Event $event)
+    {
+        $validated = $request->validate(['user' => 'required|integer|exists:users,id']);
+        $user = User::find($validated['user']);
+        $crew = $user->hasRole(['Crew']);
+
+        if ($crew) {
+            if (!$event->attendingCrew->contains($user) && !$event->insiderCrew->contains($user) && !$event->registeredCrew->contains($user)) {
+                $event->registeredCrew()->attach($user);
+            }
+        } else {
+            if (!$event->attending->contains($user) && !$event->insider->contains($user) && !$event->registered->contains($user)) {
+                $event->registered()->attach($user);
+            }
+        }
     }
 }
