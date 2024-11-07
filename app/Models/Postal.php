@@ -7,4 +7,5 @@ use Illuminate\Database\Eloquent\Model;
 class Postal extends Model
 {
     protected $table = 'postal';
+    protected $primaryKey = 'code';
 }

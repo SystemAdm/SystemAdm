@@ -12,10 +12,13 @@
 
             <li><router-link active-class="text-blue-600 hover:text-blue-600 text-bolder" class="font-bold" to="/events">Arrangementer</router-link></li>
         </ul>
-        <a class="hidden lg:inline-block lg:ml-auto lg:mr-3 py-2 px-6 bg-gray-50 hover:bg-gray-100 text-sm text-gray-900 font-bold rounded-xl transition duration-200"
+        <div v-if="user == null"><a class="hidden lg:inline-block lg:ml-auto lg:mr-3 py-2 px-6 bg-gray-50 hover:bg-gray-100 text-sm text-gray-900 font-bold rounded-xl transition duration-200"
            href="#">Sign In</a>
         <router-link class="hidden lg:inline-block py-2 px-6 bg-blue-500 hover:bg-blue-600 text-sm text-white font-bold rounded-xl transition duration-200"
            to="/signup">Sign Up</router-link>
+        </div>
+        <div v-else><a class="hidden lg:inline-block lg:ml-auto lg:mr-3 py-2 px-6 bg-gray-50 hover:bg-gray-100 text-sm text-gray-900 font-bold rounded-xl transition duration-200"
+                       @click="logout">Sign Out</a></div>
     </nav>
     <div class="navbar-menu relative z-50 bg-black" :class="{ 'hidden': !this.isMenuOpen }">
         <div class="navbar-backdrop fixed inset-0 bg-gray-800 " @click="toggleMenu"></div>
@@ -58,6 +61,13 @@
 
 <script>
 export default {
+    emits: ['logout'],
+    props: {
+        user: {
+            type: Object,
+            default: null,
+        },
+    },
     data() {
         return {
             isMenuOpen: false,
@@ -67,6 +77,9 @@ export default {
         toggleMenu() {
             this.isMenuOpen = !this.isMenuOpen;
         },
+        logout(){
+            this.$emit('logout');
+        }
     },
 };
 </script>

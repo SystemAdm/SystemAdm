@@ -6,11 +6,15 @@
     "license": "MIT",
     "require": {
         "php": "^8.2",
+        "ahmedsaoud31/laravel-permission-to-vuejs": "dev-master",
         "giggsey/libphonenumber-for-php": "^8.13",
+        "laravel/cashier": "^15.4",
         "laravel/framework": "^11.9",
         "laravel/sanctum": "^4.0",
         "laravel/tinker": "^2.9",
-        "spatie/laravel-permission": "^6.9"
+        "simplesoftwareio/simple-qrcode": "^4.2",
+        "spatie/laravel-permission": "^6.9",
+        "stripe/stripe-php": "13.8.0"
     },
     "require-dev": {
         "barryvdh/laravel-debugbar": "^3.14",

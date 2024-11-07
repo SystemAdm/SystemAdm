@@ -6,17 +6,20 @@ namespace App\Models;
 use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Laravel\Cashier\Billable;
+use LaravelAndVueJS\Traits\LaravelPermissionToVueJS;
 use Spatie\Permission\Traits\HasPermissions;
 use Spatie\Permission\Traits\HasRoles;
 
 class User extends Authenticatable
 {
     /** @use HasFactory<UserFactory> */
-    use HasFactory, Notifiable, SoftDeletes, HasRoles, HasPermissions;
+    use HasFactory, Notifiable, SoftDeletes, HasRoles, HasPermissions, Billable, LaravelPermissionToVueJS;
 
     /**
      * The attributes that are mass assignable.
@@ -53,7 +56,7 @@ class User extends Authenticatable
         ];
     }
 
-    protected $appends = ['fullname'];
+    protected $appends = ['fullname','rank'];
 
     public function phones(): BelongsToMany
     {
@@ -73,5 +76,20 @@ class User extends Authenticatable
     public function getFullnameAttribute(): string
     {
         return $this->first_name . ' ' . $this->last_name;
+    }
+
+    public function memberships(): HasMany
+    {
+        return $this->hasMany(Membership::class);
+    }
+
+    public function profile(): HasOne
+    {
+        return $this->hasOne(Profile::class);
+    }
+
+    public function getRankAttribute()
+    {
+        return $this->roles()->orderBy('rank')->first() ?? null;
     }
 }

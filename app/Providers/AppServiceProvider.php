@@ -2,8 +2,11 @@
 
 namespace App\Providers;
 
+use App\Models\User;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\ServiceProvider;
+use Laravel\Cashier\Cashier;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -20,8 +23,12 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        if (auth()->check()) {
+            setPermissionsTeamId(1);
+        }/*
         Gate::after(function ($user, $ability) {
             return $user->hasRole('Administrator');
-        });
+        });*/
+        Cashier::useCustomerModel(User::class);
     }
 }

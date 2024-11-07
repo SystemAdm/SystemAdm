@@ -1,19 +1,25 @@
 <?php
 
-namespace App\Http\Controllers\Api;
+namespace App\Http\Controllers\Api\Admin;
 
 use App\Http\Controllers\Controller;
-use App\Models\Location;
+use App\Models\Membership;
+use App\Models\User;
+use ErrorException;
 use Illuminate\Http\Request;
+use Stripe\Checkout\Session;
+use Stripe\Stripe;
 
-class LocationsController extends Controller
+class MembershipsController extends Controller
 {
     /**
      * Display a listing of the resource.
      */
     public function index()
     {
-        return response(Location::with('postal')->get());
+        //$user = auth()->user();
+        $user = User::find(8);
+        return Membership::with('user')->where('user_id', $user->id)->get();
     }
 
     /**

@@ -7,7 +7,9 @@ use App\Models\Email;
 use App\Models\Phone;
 use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use libphonenumber\PhoneNumberUtil;
+use SimpleSoftwareIO\QrCode\Facades\QrCode;
 
 class UsersController extends Controller
 {
@@ -23,7 +25,26 @@ class UsersController extends Controller
      */
     public function index()
     {
-        //
+        $users = User::query()
+            ->where(function ($query) {
+                $query->where('active', true)
+                    ->whereHas('profile', function ($query) {
+                        $query->where('visible', true);
+                    });
+            })
+            ->orWhereHas('roles', function ($query) {
+                $query->where('name', 'Crew');
+            })
+            ->with(['roles', 'profile.postal']) // Ensure roles and profile are loaded
+            ->orderByRaw('CASE WHEN EXISTS (
+            SELECT 1
+            FROM model_has_roles
+            WHERE model_has_roles.role_id = users.id
+            AND model_has_roles.model_id = (SELECT id FROM roles WHERE name = "Crew" LIMIT 1)
+        ) THEN 0 ELSE 1 END')
+            ->orderBy('first_name') // Ordering users by first name
+            ->get();
+        return response()->json($users);
     }
 
     /**
@@ -62,7 +83,7 @@ class UsersController extends Controller
      */
     public function show(string $id)
     {
-        //
+        return User::with('phones', 'roles', 'profile')->find($id);
     }
 
     /**
@@ -94,10 +115,11 @@ class UsersController extends Controller
         $validated = $request->validate(['phone' => 'required']);
         $parsed = $this->phoneUtil->parse($validated['phone'], 'NO');
         if ($this->phoneUtil->isValidNumber($parsed)) {
-            $phone = Phone::with('users')->where('number', $parsed->getNationalNumber())->where('country', $parsed->getCountryCode())->first();
+            $phone = Phone::with('users','users.profile')->where('number', $parsed->getNationalNumber())->where('country', $parsed->getCountryCode())->first();
             if ($phone->users()->count() > 0) {
                 return response()->json($phone->users()->get());
             }
+
         }
         return response()->json(null, 404);
     }
@@ -107,7 +129,7 @@ class UsersController extends Controller
         $validated = $request->validate(['phone' => 'required']);
         $parsed = $this->phoneUtil->parse($validated['phone'], 'NO');
         if ($this->phoneUtil->isValidNumber($parsed)) {
-            $phone = Phone::with('users')->where('number', $parsed->getNationalNumber())->where('country', $parsed->getCountryCode())->first();
+            $phone = Phone::with('users','users.profile')->where('number', $parsed->getNationalNumber())->where('country', $parsed->getCountryCode())->first();
             if ($phone && $phone->users->count() > 0) {
                 return response()->json($phone->users);
             }
@@ -140,5 +162,27 @@ class UsersController extends Controller
             return response()->json(1);
         }
         return response()->json(0);
+    }
+
+    public function me(Request $request)
+    {
+        return User::with('phones')->find($request->user()->id);
+    }
+
+    public function qr(Request $request)
+    {
+        $validated = $request->validate([
+            'selected'=>['nullable','integer']
+        ]);
+        //$u = Auth::user()->id;
+        $u = $validated['selected'];
+        $i = $u * 35;
+        $w = 'SpL';
+
+        $riddle = $w.$i;
+
+        $qrCode = QrCode::format('png')->size(200)->generate($riddle);
+
+        return response($qrCode)->header('Content-Type','image/png');
     }
 }

@@ -10,7 +10,16 @@
         @vite(['resources/css/app.css', 'resources/js/app.js'])
     @endif
 </head>
-<body id="app" class="bg-black text-white">
+<body class="bg-black text-white">
+<div id="app">
+
+</div>
 <!-- Vue app will be mounted here -->
+<script type="text/javascript">
+    window.Laravel = {
+        csrfToken: "{{ csrf_token() }}",
+        jsPermissions: {!! auth()->user()?auth()->user()->jsPermissions():0 !!}
+    }
+</script>
 </body>
 </html>

@@ -1,6 +1,6 @@
 <!-- Signup.vue -->
 <template>
-    <div class="fixed z-50 inset-0 bg-gray-900 bg-opacity-60 overflow-y-auto h-full w-full px-4">
+    <div class="fixed z-50 inset-0 bg-gray-900 bg-opacity-60 overflow-y-auto h-full w-full px-4 text-black">
         <div class="pt-5 relative top-40 mx-auto shadow-xl rounded-md bg-white max-w-lg">
             <div class="p-6 pt-0 text-center">
                 <h1 class="text-2xl font-extrabold text-black">Create new user</h1>
@@ -22,13 +22,31 @@
                         <span class="ml-3 mt-2 block text-red-700" v-if="error.phone">{{ error.phone }}</span>
                     </div>
                     <div v-if="step === 1">
-                        <label>From your phone number, we found a registration on our site! We need a confirmation from you. Are you:</label>
+                        <label>From your phone number, we found a registration on our site! We need a confirmation from
+                            you.<br/><span class="font-bold">Are you:</span></label>
                         <div class="justify-self-start" v-for="name in names" :key="name.id">
-                            <label class="block text-gray-500 font-bold">
-                                <input class="mr-2 leading-tight" type="radio" name="restriction"
-                                       id="attending_crew" v-model="this.name" :value="name.id">
-                                <span class="text-sm">{{ name.name }}</span>
-                            </label>
+                            <div class="text-gray-500 font-bold flex items-center" @click="this.name = name.id">
+                                <input
+                                    class="hidden"
+                                    type="radio"
+                                    name="restriction"
+                                    v-model="this.name"
+                                    :value="name.id"
+                                >
+                                <div
+                                    :class="[
+                'border-4 p-1 transition-all duration-300',
+                this.name === name.id ? 'border-blue-500' : 'border-transparent'
+            ]" class="justify-items-center"
+                                >
+                                    <img
+                                        :src="name.profile.image"
+                                        alt="User Avatar"
+                                        class="w-12 h-12 rounded-full object-cover"
+                                    >
+                                    <span class="text-sm ml-2">{{ name.fullname }}</span>
+                                </div>
+                            </div>
                         </div>
                         <div class="justify-self-start">
                             <label class="block text-black font-bold">
@@ -76,7 +94,47 @@
                                 v-model="this.lastname">
                         </div>
                     </div>
-                    <div v-if="step === 3" class="text-left">
+                    <div v-if="step===3">
+                        <div class="flex justify-center gap-2">
+                            <div class="text-gray-500 font-bold flex items-center" @click="this.option = 'qr'">
+                                <input
+                                    class="hidden"
+                                    type="radio"
+                                    name="restriction"
+                                    v-model="this.option"
+                                    value="qr"
+                                >
+                                <div
+                                    :class="[
+                'border-4 p-1 transition-all duration-300',
+                this.option === 'qr' ? 'border-blue-500' : 'border-transparent'
+            ]" class="justify-items-center"
+                                >
+                                    <font-awesome-icon class="size-20" :icon="['fas', 'qrcode']"/>
+                                    <div class="text-sm ml-2">Show my QR code</div>
+                                </div>
+                            </div>
+                            <div class="text-gray-500 font-bold flex items-center" @click="this.option = 'register'">
+                                <input
+                                    class="hidden"
+                                    type="radio"
+                                    name="restriction"
+                                    v-model="this.option"
+                                    value="register"
+                                >
+                                <div
+                                    :class="[
+                'border-4 p-1 transition-all duration-300',
+                this.option === 'register' ? 'border-blue-500' : 'border-transparent'
+            ]" class="justify-items-center"
+                                >
+                                    <font-awesome-icon class="size-20" :icon="['fas', 'id-card']"/>
+                                    <div class="text-sm ml-2">Login or register an account</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div v-if="step === 4" class="text-left">
                         <label class="block text-gray-700 text-sm font-bold mb-2" for="lastname">
                             Birthday
                             <span class="block text-gray-400 text-sm">If not set, you will be treated as less than 13 years old</span>
@@ -93,7 +151,7 @@
                             v-on:focus="error.birthday = false">
                         <span class="ml-3 mt-2 block text-red-700" v-if="error.birthday">{{ error.birthday }}</span>
                     </div>
-                    <div v-if="step === 4" class="text-left">
+                    <div v-if="step === 5" class="text-left">
                         <label class="block text-gray-700 text-sm font-bold mb-2" for="email">
                             E-mail address <span class="text-red-700">*</span>
                             <span class="block text-gray-400 text-sm">We will only send you critical, but insensitive information. Ex. reset password</span>
@@ -128,7 +186,7 @@
                                 error.email_confirm
                             }}</span>
                     </div>
-                    <div v-if="step === 6" class="text-left">
+                    <div v-if="step === 7" class="text-left">
                         <label class="block text-gray-700 text-sm font-bold mb-2" for="password">
                             Password <span class="text-red-700">*</span>
                             <span
@@ -181,7 +239,7 @@
                 <div class="block text-black mb-3">
                     All fields marked with <span class="text-red-700">*</span> is required
                 </div>
-                <button v-if="step >= 9" @click="next"
+                <button v-if="step >= 10" @click="next"
                         class="text-white bg-green-600 hover:bg-green-800 focus:ring-4 focus:ring-green-300 font-medium rounded-lg text-base inline-flex items-center px-3 py-2.5 text-center mr-2">
                     Submit
                 </button>
@@ -193,29 +251,34 @@
                         class="text-white bg-yellow-600 hover:bg-yellow-800 focus:ring-4 focus:ring-yellow-300 font-medium rounded-lg text-base inline-flex items-center px-3 py-2.5 text-center mr-2">
                     Prev
                 </button>
-                <button @click="closeModal"
-                        class="text-white bg-red-600 hover:bg-red-800 focus:ring-4 focus:ring-red-300 font-medium rounded-lg text-base inline-flex items-center px-3 py-2.5 text-center">
+                <router-link to="/"
+                             class="text-white bg-red-600 hover:bg-red-800 focus:ring-4 focus:ring-red-300 font-medium rounded-lg text-base inline-flex items-center px-3 py-2.5 text-center">
                     Cancel
-                </button>
+                </router-link>
                 <span class="text-black">{{ this.step }}</span>
             </div>
         </div>
     </div>
+    <QrCode modal-open="modal-open" @closeModal="closeModal"></QrCode>
 </template>
 
 <script>
 import axios from "axios";
 import {DateTime} from "luxon";
+import QrCode from "../modals/QrCode.vue";
 
 export default {
     name: 'SignupPage',
+    components: {QrCode},
     data() {
         return {
-            step: 0,
+            modalOpen: false,
+            step: 3,
             firstname: null,
             middlename: null,
             lastname: null,
             phone: null,
+            option: 'qr',
             error: {
                 phone: false,
                 email: false,
@@ -237,12 +300,12 @@ export default {
             email_confirm: null,
             password: null,
             password_confirm: null,
-            name:null,
+            name: null,
         }
     },
     methods: {
         closeModal() {
-            this.$emit('update:modelValue', false); // Emit the event to update parent state
+            this.modalOpen = false
         },
         confirmAction() {
             // Handle your confirmation logic here
@@ -274,7 +337,11 @@ export default {
                 this.error.email_confirm = 'E-mail address confirmation does not match';
             }
             if (this.step === 3) {
-                // TODO
+                if (this.option === 'qr') {
+                    this.modalOpen = true;
+                } else {
+                    this.step++;
+                }
             }
             if (this.step === 2) {
                 if (this.firstname == null || this.firstname === '') {
@@ -288,7 +355,7 @@ export default {
                     this.error.lastname = 'Lastname must contain more than 2 characters';
                 }
                 if (this.middlename != null && this.middlename !== '') {
-                    if (this.middlename.length <2) {
+                    if (this.middlename.length < 2) {
                         this.error.middlename = 'Middlename must contain more than 2 characters';
                     }
                 }
@@ -298,7 +365,10 @@ export default {
                 // TODO
             }
             if (this.step === 1) {
-                // TODO
+                if (this.name > 0) {
+                    this.step++;
+                }
+                this.step++;
             }
             if (this.step === 0) {
                 if (this.phone != null) {
