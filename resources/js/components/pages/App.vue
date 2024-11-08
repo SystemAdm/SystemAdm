@@ -1,9 +1,9 @@
 <!-- App.vue -->
 <template>
     <div class="container">
-        <Navbar :user="user" @logout="logout" />
+        <Navbar :user="user" @logout="logout"/>
         <div class="p-5">
-            <router-view :me="user" /> <!-- Displays routed components -->
+            <router-view :me="user"/> <!-- Displays routed components -->
         </div>
 
         <!-- Notification Groups (Error, Generic, Success) -->
@@ -66,8 +66,10 @@
                             :key="notification.id"
                         >
                             <div class="flex items-center justify-center w-12 bg-blue-500">
-                                <svg class="w-6 h-6 text-white fill-current" viewBox="0 0 40 40" xmlns="http://www.w3.org/2000/svg">
-                                    <path d="M20 3.33331C10.8 3.33331 3.33337 10.8 3.33337 20C3.33337 29.2 10.8 36.6666 20 36.6666C29.2 36.6666 36.6667 29.2 36.6667 20C36.6667 10.8 29.2 3.33331 20 3.33331ZM21.6667 28.3333H18.3334V25H21.6667V28.3333ZM21.6667 21.6666H18.3334V11.6666H21.6667V21.6666Z"/>
+                                <svg class="w-6 h-6 text-white fill-current" viewBox="0 0 40 40"
+                                     xmlns="http://www.w3.org/2000/svg">
+                                    <path
+                                        d="M20 3.33331C10.8 3.33331 3.33337 10.8 3.33337 20C3.33337 29.2 10.8 36.6666 20 36.6666C29.2 36.6666 36.6667 29.2 36.6667 20C36.6667 10.8 29.2 3.33331 20 3.33331ZM21.6667 28.3333H18.3334V25H21.6667V28.3333ZM21.6667 21.6666H18.3334V11.6666H21.6667V21.6666Z"/>
                                 </svg>
                             </div>
 
@@ -105,8 +107,10 @@
                             :key="notification.id"
                         >
                             <div class="flex items-center justify-center w-12 bg-green-500">
-                                <svg class="w-6 h-6 text-white fill-current" viewBox="0 0 40 40" xmlns="http://www.w3.org/2000/svg">
-                                    <path d="M20 3.33331C10.8 3.33331 3.33337 10.8 3.33337 20C3.33337 29.2 10.8 36.6666 20 36.6666C29.2 36.6666 36.6667 29.2 36.6667 20C36.6667 10.8 29.2 3.33331 20 3.33331ZM21.6667 28.3333H18.3334V25H21.6667V28.3333ZM21.6667 21.6666H18.3334V11.6666H21.6667V21.6666Z"/>
+                                <svg class="w-6 h-6 text-white fill-current" viewBox="0 0 40 40"
+                                     xmlns="http://www.w3.org/2000/svg">
+                                    <path
+                                        d="M20 3.33331C10.8 3.33331 3.33337 10.8 3.33337 20C3.33337 29.2 10.8 36.6666 20 36.6666C29.2 36.6666 36.6667 29.2 36.6667 20C36.6667 10.8 29.2 3.33331 20 3.33331ZM21.6667 28.3333H18.3334V25H21.6667V28.3333ZM21.6667 21.6666H18.3334V11.6666H21.6667V21.6666Z"/>
                                 </svg>
                             </div>
 
@@ -127,9 +131,12 @@
 <script>
 import axios from "axios";
 import Navbar from '../Navbar.vue';
-import { Notification, NotificationGroup } from "notiwind";
+import {Notification, NotificationGroup} from "notiwind";
 
 export default {
+    setup() {
+        console.log(localStorage.getItem('user'))
+    },
     components: {
         Notification,
         NotificationGroup,
@@ -137,12 +144,15 @@ export default {
     },
     data() {
         return {
-            user: JSON.parse(localStorage.getItem('user')) || null,
+            user: null,
             loading: false, // Optional loading indicator
         };
     },
     async created() {
-        await this.fetchAuthenticatedUser(); // Initialize user data on app load
+        if (!this.user) {
+            await this.fetchAuthenticatedUser();
+        }
+        // Initialize user data on app load
     },
     methods: {
         async fetchAuthenticatedUser() {
@@ -166,7 +176,7 @@ export default {
                     const response = await axios.get('/api/user');
                     this.user = response.data;
                     // Save fresh user data to local storage
-                    localStorage.setItem('user', JSON.stringify(this.user));
+                    localStorage.setItem('user', (this.user) ? JSON.stringify(this.user) : null);
                 } catch (error) {
                     console.error('User is not authenticated', error);
                     this.user = null;

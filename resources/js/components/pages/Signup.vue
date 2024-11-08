@@ -181,7 +181,7 @@
                             v-model="this.email_confirm"
                             required
                             :class="{'border-red-700':error.email_confirm}"
-                            v-on:focus="error.email_confirm = false">
+                            v-on:focus="this.error.email_confirm = false">
                         <span class="ml-3 mt-2 block text-red-700" v-if="error.email_confirm">{{
                                 error.email_confirm
                             }}</span>
@@ -273,7 +273,7 @@ export default {
     data() {
         return {
             modalOpen: false,
-            step: 3,
+            step: 0,
             firstname: null,
             middlename: null,
             lastname: null,
