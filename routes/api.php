@@ -31,6 +31,7 @@ Route::apiResource('locations', LocationsController::class)->only(['index', 'sho
 
 Route::get('users/me', [UsersController::class, 'me']);
 Route::post('users/qr', [UsersController::class, 'qr']);
+Route::post('users/check', [UsersController::class, 'check']);
 Route::apiResource('users', UsersController::class)->only(['index', 'show']);
 
 Route::post('users/validate_phone', [UsersController::class, 'validatePhone']);
@@ -41,7 +42,7 @@ Route::post('memberships/pay', [MembershipsController::class, 'pay']);
 Route::apiResource('memberships', MembershipsController::class);
 
 Route::prefix('admin')->name('admin.')->group(function () {
-
+    Route::apiResource('rules',\App\Http\Controllers\api\Admin\RulesController::class);
     Route::post('upload/{type}', [\App\Http\Controllers\Api\Admin\UploadController::class, 'upload']);
     Route::apiResource('events', \App\Http\Controllers\Api\Admin\EventsController::class);
     Route::apiResource('locations', \App\Http\Controllers\Api\Admin\LocationsController::class);

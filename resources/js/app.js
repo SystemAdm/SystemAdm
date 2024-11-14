@@ -6,21 +6,30 @@ import Notifications from 'notiwind'
 import LaravelPermissionToVueJS from 'laravel-permission-to-vuejs'
 import axios from "axios";
 import {FontAwesomeIcon} from "@fortawesome/vue-fontawesome";
-import { library } from '@fortawesome/fontawesome-svg-core'
+import {library} from '@fortawesome/fontawesome-svg-core'
 import {
-    faEnvelope, faIdCard,
+    faArrowLeft,
+    faArrowRight,
+    faBars, faCheck, faClock,
+    faEnvelope,
+    faIdCard,
+    faLock,
     faMagnifyingGlass,
-    faMapLocation,
     faMapMarker,
-    faPhone, faQrcode, faShield,
-    faUser
+    faPhone,
+    faQrcode,
+    faShield,
+    faTrashCan, faTrashCanArrowUp,
+    faUser, faXmark
 } from '@fortawesome/free-solid-svg-icons'
 
-library.add(faUser,faMagnifyingGlass,faEnvelope,faPhone,faMapMarker,faShield,faQrcode,faIdCard);
+library.add(faUser, faMagnifyingGlass, faEnvelope, faPhone, faMapMarker, faShield, faQrcode, faIdCard, faBars, faTrashCan, faArrowRight, faArrowLeft, faLock,faClock, faCheck,faTrashCanArrowUp,faXmark);
 axios.defaults.withCredentials = true;
 
 // Define routes
 const routes = [
+    {name: 'AdminRules',path: '/admins/rules',component: () => import('./components/admin/pages/RulesIndex.vue')},
+    {name:'RulesIndex',path: '/rules',component: () => import('./components/pages/RulesIndex.vue')},
     {name: 'Membership', path: '/member', component: () => import('./components/pages/Membership.vue')},
     {name: 'Index', path: '/', component: () => import('./components/pages/Home.vue')}, // Home should be loaded on the root route
     {name: 'Events', path: '/events', component: () => import('./components/pages/Events.vue')},
@@ -29,7 +38,7 @@ const routes = [
     {name: 'ProfilesIndex', path: '/profiles', component: () => import('./components/pages/ProfilesIndex.vue')},
     {name: 'ProfilesShow', path: '/profiles/:user', component: () => import('./components/pages/ProfilesShow.vue')},
     {
-        name: 'admin.events',
+        name: 'AdminEvents',
         path: '/admins/events',
         component: () => import('./components/admin/pages/EventsIndex.vue'),
     },

@@ -8,6 +8,7 @@ use App\Models\Phone;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Hash;
 use libphonenumber\PhoneNumberUtil;
 use SimpleSoftwareIO\QrCode\Facades\QrCode;
 
@@ -60,7 +61,7 @@ class UsersController extends Controller
      */
     public function store(Request $request)
     {
-        $validated = $request->validate([
+        /*$validated = $request->validate([
             'firstname' => ['required', 'min:2', 'max:32'],
             'middlename' => ['nullable', 'min:2', 'max:32'],
             'lastname' => ['required', 'min:2', 'max:32'],
@@ -70,9 +71,9 @@ class UsersController extends Controller
         $phone = Phone::firstOrCreate(['country' => $phoneUtil->getCountryCode(), 'number' => $phoneUtil->getNationalNumber(), 'primary' => true]);
         $user = new User(['first_name' => $validated['firstname'], 'middle_name' => $validated['middlename'], 'last_name' => $validated['lastname']]);
         $user->save();
-        setPermissionsTeamId(1);
         $user->assignRole(6);
-        $user->phones()->attach($phone);
+        $user->phones()->attach($phone);*/
+        $user = User::find(8);
         return response()->json($user);
 
         //return User::with('phones')->find(8);
@@ -131,7 +132,7 @@ class UsersController extends Controller
         if ($this->phoneUtil->isValidNumber($parsed)) {
             $phone = Phone::with('users','users.profile')->where('number', $parsed->getNationalNumber())->where('country', $parsed->getCountryCode())->first();
             if ($phone && $phone->users->count() > 0) {
-                return response()->json($phone->users);
+                return response()->json($phone->users->keyBy('id'));
             }
             return response()->json(1);
         }
@@ -181,8 +182,17 @@ class UsersController extends Controller
 
         $riddle = $w.$i;
 
-        $qrCode = QrCode::format('png')->size(200)->generate($riddle);
+        $qrCode = base64_encode(QrCode::format('png')->size(200)->generate($riddle));
 
         return response($qrCode)->header('Content-Type','image/png');
+    }
+    public function check(Request $request)
+    {
+        $validated = $request->validate(['u'=>['required','exists:users,id'],'p'=>['required','string']]);
+        $user = User::find($validated['u']);
+        $pwd = $validated['p'];
+
+        $auth = Hash::check($pwd, $user->password);
+        return response()->json($auth);
     }
 }

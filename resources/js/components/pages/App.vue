@@ -1,8 +1,8 @@
 <!-- App.vue -->
 <template>
-    <div class="container">
+    <div class="w-full">
         <Navbar :user="user" @logout="logout"/>
-        <div class="p-5">
+        <div class="py-5">
             <router-view :me="user"/> <!-- Displays routed components -->
         </div>
 
@@ -178,7 +178,7 @@ export default {
                     // Save fresh user data to local storage
                     localStorage.setItem('user', (this.user) ? JSON.stringify(this.user) : null);
                 } catch (error) {
-                    console.error('User is not authenticated', error);
+                    //console.error('User is not authenticated', error);
                     this.user = null;
                 }
             }

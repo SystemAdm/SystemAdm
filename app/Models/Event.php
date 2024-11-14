@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\Storage;
 
 class Event extends Model
 {
@@ -167,8 +168,27 @@ class Event extends Model
         $string = str_replace($this->days, $this->dager, $string);
         return ucfirst(strtolower(str_replace($this->months, $this->maneder, $string)));
     }
-    function getImagesAttribute(): string
+    public function getImagesAttribute()
     {
-        return asset('storage'.DIRECTORY_SEPARATOR.'images'.DIRECTORY_SEPARATOR.'events'.DIRECTORY_SEPARATOR.$this->image);
+        $image = null;
+        $mimeType = 'image/png'; // Default MIME type
+
+        if ($this->image == null) {
+            // Use default image when $this->image is null
+            $imagePath = public_path('images/logos/spillhuset-logo-black.png');
+        } else {
+            // Use image from storage
+            $imagePath = storage_path('app/public/images/events/' . $this->image);
+        }
+
+        // Check if the file exists to avoid errors
+        if (file_exists($imagePath)) {
+            // Determine the MIME type (supports PNG and JPEG)
+            $mimeType = mime_content_type($imagePath); // Detects the actual MIME type
+            $image = base64_encode(file_get_contents($imagePath));
+        }
+
+        // Return the base64-encoded image with the detected MIME type
+        return response($image)->header('Content-Type', $mimeType);
     }
 }

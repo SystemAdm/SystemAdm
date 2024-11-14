@@ -9,7 +9,7 @@
                     <div class="flex justify-center relative rounded-lg overflow-hidden h-52">
                         <div class="transition-transform duration-500 transform ease-in-out hover:scale-110 w-full">
                             <div class="absolute">
-                                <img src="/images/logos/spillhuset-logo-black.png" alt="Tesy">
+                                <img :src="image(event.images)" alt="Tesy">
                             </div>
                         </div>
 
@@ -146,7 +146,9 @@ export default {
         signup(id) {
             this.modalOpen = true;
             this.selected = id;
-        },
+        },image(value) {
+            return `data:image/png;base64,${value.original}`;
+        }
     },
     mounted() {
         this.fetch();

@@ -11,11 +11,14 @@
 import NextEvent from "../NextEvent.vue";
 export default {
     name: 'Home',
+    props:{
+        me:{
+            type: Object,
+            required: false,
+        }
+    },
     components: {
         NextEvent,
-    },
-    mounted() {
-        console.log('Home component mounted');
     },
 };
 </script>

@@ -1,8 +1,8 @@
 <template>
-    <div class="columns-3 gap-3">
+    <div class="columns-1 md:columns-3 gap-3">
         <div v-for="event in events" class=" mb-3">
-            <div class="max-w-sm rounded overflow-hidden shadow-lg bg-gray-400 text-black">
-                <img class="w-full h-20" :src="event.images" alt="Sunset in the mountains">
+            <div class="max-w-sm text-center rounded overflow-hidden shadow-lg bg-gray-400 text-black">
+                <img class="flex h-20 place-self-center" :src="image(event.images)" alt="Sunset in the mountains">
                 <div class="px-6 py-4">
                     <div class="font-bold text-xl mb-2">{{ event.title }}</div>
                     <p class="text-gray-700 text-base" v-html="event.description">
@@ -27,9 +27,12 @@ export default {
     },
     methods: {
         fetch() {
-            axios.get('/api/events').then(response => {
+            axios.get('/api/events/short').then(response => {
                 this.events = response.data;
             })
+        },
+        image(value) {
+            return `data:image/png;base64,${value.original}`;
         }
     },
     mounted() {

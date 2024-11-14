@@ -10,8 +10,8 @@
         @vite(['resources/css/app.css', 'resources/js/app.js'])
     @endif
 </head>
-<body class="bg-black text-white">
-<div id="app">
+<body class="bg-black text-white flex justify-center">
+<div id="app" class="w-full">
 
 </div>
 <!-- Vue app will be mounted here -->
