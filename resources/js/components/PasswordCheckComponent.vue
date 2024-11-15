@@ -49,7 +49,6 @@ export default {
             }
             axios.post('/api/users/check', {p: this.password,u:this.user.id}).then(response => {
                 if (response.data === true) {
-                    console.log('ha');
                     this.$emit('success', true);
                 } else {
                     this.sendErrors({password: 'Incorrect password'});

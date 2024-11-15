@@ -4,7 +4,7 @@
         <div class="m-5 pt-5 relative mx-auto shadow-xl rounded-md bg-white max-w-lg">
             <div class="p-6 pt-0 text-center">
                 <h1 class="text-2xl font-extrabold text-black">Create new user</h1>
-                <div class="px-8 pt-6 pb-2 mb-4">
+                <div class="px-8 pt-6">
                     <!-- PHONE -->
                     <PhoneComponent v-if="step === 1" :hasErrors="errors" @sendErrors="sendErrors" @selections="users" @close="close" @email="step = 1"></PhoneComponent>
                     <EmailComponent v-if="step === 2" :secondary="!primary" :hasErrors="errors" @sendErrors="sendErrors" @close="close" @phone="step = 0"></EmailComponent>
@@ -17,7 +17,7 @@
                     <SelectCreationComponent v-if="step === 9" @viewQr="viewQr" @close="close" @register="step = 5"></SelectCreationComponent>
                     <EmailComponent v-if="step === 10" :secondary="!primary" :hasErrors="errors" @sendErrors="sendErrors" @close="close"></EmailComponent>
                     <PasswordComponent v-if="step === 11" :hasErrors="errors" @sendErrors="sendErrors" @close="close"></PasswordComponent>
-                    <SummaryAgreement></SummaryAgreement>
+                    <SummaryAgreement v-if="step === 12"></SummaryAgreement>
                     <QrCode v-if="option === 'qr' && selected != null" :selectedUser="selected" @close="close"></QrCode>
                 </div>
             </div>
@@ -67,7 +67,7 @@ export default {
     data() {
         return {
             modalOpen: false, // new
-            step: 0,
+            step: 1,
             selection: null, // new
             selected: null, // new
             firstname: null,
@@ -101,7 +101,7 @@ export default {
         users(value) {
             this.phone = value.phone;
             this.selection = value.data;
-            if (value.data === 1) {
+            if (Object.keys(value.data).length === 1) {
                 // Phone number is valid; No users found
                 this.step = 3;
                 // 0 -> 3; Phone -> Name
@@ -134,7 +134,8 @@ export default {
         // STEP 2 - Require if password is set! Password form
         passwordCorrect(){
             // Correct password given
-            this.step = 4;
+            this.step = 99;
+            this.option = "qr";
             // 2 -> 4; Password -> FamilyPhone
         },
         // STEP 3 - Name form
