@@ -4,21 +4,16 @@
         <div class="m-5 pt-5 relative mx-auto shadow-xl rounded-md bg-white max-w-lg">
             <div class="p-6 pt-0 text-center">
                 <h1 class="text-2xl font-extrabold text-black">Create new user</h1>
+                
                 <div class="px-8 pt-6">
-                    <!-- PHONE -->
-                    <PhoneComponent v-if="step === 1" :hasErrors="errors" @sendErrors="sendErrors" @selections="users" @close="close" @email="step = 1"></PhoneComponent>
-                    <EmailComponent v-if="step === 2" :secondary="!primary" :hasErrors="errors" @sendErrors="sendErrors" @close="close" @phone="step = 0"></EmailComponent>
-                    <SelectNameComponent v-if="step === 3 && selection != null" :selection="selection" @selectUser="selectUser" @sendErrors="sendErrors" :hasErrors="errors" @close="close"></SelectNameComponent>
-                    <PasswordCheckComponent v-if="step === 4" :hasErrors="errors" @sendErrors="sendErrors" @close="close" @success="passwordCorrect" :user="this.selected"></PasswordCheckComponent>
-                    <NameComponent v-if="step === 5 && selected === null" :hasErrors="errors" @sendErrors="sendErrors" :phone="phone" @user="user" @close="close"></NameComponent>
-                    <SelectAgeComponent v-if="step === 6" :hasErrors="errors" @sendErrors="sendErrors" @close="close"></SelectAgeComponent>
-                    <FamilyPhoneComponent v-if="step === 7" :hasErrors="errors" @sendErrors="sendErrors" @close="close" @familyPhone="setFamilyPhone"></FamilyPhoneComponent>
-                    <FamilyNameComponent v-if="step === 8" :has-errors="errors" @sendErrors="sendErrors" @close="close" @familyName="setFamilyName"></FamilyNameComponent>
-                    <SelectCreationComponent v-if="step === 9" @viewQr="viewQr" @close="close" @register="step = 5"></SelectCreationComponent>
-                    <EmailComponent v-if="step === 10" :secondary="!primary" :hasErrors="errors" @sendErrors="sendErrors" @close="close"></EmailComponent>
-                    <PasswordComponent v-if="step === 11" :hasErrors="errors" @sendErrors="sendErrors" @close="close"></PasswordComponent>
-                    <SummaryAgreement v-if="step === 12"></SummaryAgreement>
-                    <QrCode v-if="option === 'qr' && selected != null" :selectedUser="selected" @close="close"></QrCode>
+                    <component 
+                        :is="currentComponent"
+                        v-bind="componentProps"
+                        @sendErrors="errors => registration.errors = errors"
+                        @close="reset"
+                        @success="handleSuccess"
+                        @back="step = prev.pop()"
+                    />
                 </div>
             </div>
         </div>
@@ -26,7 +21,6 @@
 </template>
 
 <script>
-import axios from "axios";
 import QrCode from "../modals/QrCode.vue";
 import {FontAwesomeIcon} from "@fortawesome/vue-fontawesome";
 import PhoneComponent from "../PhoneComponent.vue";
@@ -40,10 +34,12 @@ import PasswordCheckComponent from "../PasswordCheckComponent.vue";
 import FamilyPhoneComponent from "../FamilyPhoneComponent.vue";
 import FamilyNameComponent from "../FamilyNameComponent.vue";
 import SummaryAgreement from "../SummaryAgreement.vue";
+import EmailCheckComponent from "../EmailCheckComponent.vue";
 
 export default {
     name: 'SignupPage',
     components: {
+        EmailCheckComponent,
         SummaryAgreement,
         FamilyNameComponent,
         FamilyPhoneComponent,
@@ -66,115 +62,125 @@ export default {
     },
     data() {
         return {
-            modalOpen: false, // new
-            step: 1,
-            selection: null, // new
-            selected: null, // new
-            firstname: null,
-            middlename: null,
-            lastname: null,
-            phone: null,
-            option: null,
-            errors: {
-                phone: false,
-                email: false,
-                email_confirm: false,
-                password: false,
-                password_confirm: false,
-                firstname: false,
-                lastname: false,
-                middlename: false,
-                select_name: false,
+            STEPS: {
+                PHONE: 1,
+                EMAIL: 2,
+                SELECT_NAME: 3,
+                PASSWORD_CHECK: 4,
+                NAME: 5,
+                AGE: 6,
+                GUARDIAN_PHONE: 7,
+                GUARDIAN_EMAIL: 8,
+                GUARDIAN_SELECT: 9,
+                GUARDIAN_NAME: 10,
+                CREATION_SELECT: 11,
+                USER_EMAIL: 12,
+                USER_PASSWORD: 13,
+                CHILD_PHONE: 14,
+                CHILD_EMAIL: 15,
+                CHILD_SELECT: 16,
+                CHILD_NAME: 17,
+                SUMMARY: 19,
+                QR: 20
             },
-            return: null,
-            minDate: null,
-            birthday: null,
-            email: null,
-            email_confirm: null,
-            password: null,
-            password_confirm: null,
-            name: null,
+            step: 1,
+            prev: [],
+            
+            registration: {
+                type: 'user',  // 'user' eller 'guardian'
+                option: 'qr',
+                errors: {},
+            },
+            
+            user: {
+                phone: null,
+                email: null,
+                selection: null,
+                selected: null,
+                primary: false,
+                age: 3,
+                password: null
+            },
+            
+            guardian: {
+                phone: null,
+                email: null,
+                selection: null,
+                selected: null
+            },
+            
+            child: {
+                phone: null,
+                email: null,
+                selection: null,
+                selected: null
+            }
+        }
+    },
+    computed: {
+        isAdult() {
+            return this.user.age >= 18;
+        },
+        
+        currentComponent() {
+            const componentMap = {
+                [this.STEPS.PHONE]: 'PhoneComponent',
+                [this.STEPS.EMAIL]: 'EmailCheckComponent',
+                // ... map alle komponenter
+            };
+            return componentMap[this.step];
+        },
+        
+        componentProps() {
+            return {
+                hasErrors: this.registration.errors,
+                guardian: this.step >= this.STEPS.GUARDIAN_PHONE,
+                prev: this.prev,
+                selection: this.getCurrentSelection,
+                selected: this.getCurrentSelected
+            };
         }
     },
     methods: {
-        // STEP 0 - Phone form
-        users(value) {
-            this.phone = value.phone;
-            this.selection = value.data;
-            if (Object.keys(value.data).length === 1) {
-                // Phone number is valid; No users found
-                this.step = 3;
-                // 0 -> 3; Phone -> Name
-            } else {
-                // One or more users is found; Show selection
-                this.step = 1;
-                // 0 -> 1; Phone -> SelectName
-            }
+        getCurrentSelection() {
+            if (this.step <= this.STEPS.AGE) return this.user.selection;
+            if (this.step <= this.STEPS.CREATION_SELECT) return this.guardian.selection;
+            return this.child.selection;
         },
-        // STEP 2
-        selectUser(value) {
-            if (value === 0) {
-                // No user selected; Create a new user
-                this.step = 3;
-                // 1 -> 3, SelectName -> Name
-            } else {
-                // User found
-                this.selected = value;
-                if (this.selected.active) {
-                    // User has an account protected
-                    this.step++;
-                    // 1 -> 2, SelectName -> PasswordCheck
-                } else {
-                    // User is not protected
-                    this.step = 4;
-                    // 1 -> 4, Phone -> FamilyPhone
-                }
-            }
-        },
-        // STEP 2 - Require if password is set! Password form
-        passwordCorrect(){
-            // Correct password given
-            this.step = 99;
-            this.option = "qr";
-            // 2 -> 4; Password -> FamilyPhone
-        },
-        // STEP 3 - Name form
-        user(value) {
-            this.selected = value;
-            // User saved
-            this.step = 4;
-            // 3 -> 4; Name -> FamilyPhone
-        },
-        // Optional STEP 6 - View QR code
-        viewQr() {
-            this.option = 'qr';
-            this.step = 99;
-        },
-        // STEP 7 - Age form
-        birth(value){
-            this.birthday = value;
-            this.step++;
-            // 7 -> 8; Age -> E-mail
+        
+        getCurrentSelected() {
+            if (this.step <= this.STEPS.AGE) return this.user.selected;
+            if (this.step <= this.STEPS.CREATION_SELECT) return this.guardian.selected;
+            return this.child.selected;
         },
 
-        close() {
-            this.selected = null;
-            this.selection = null;
-            this.options = null;
-            this.step = 0;
-        },
-        sendErrors(value) {
-            for (let key in value) {
-                if (value.hasOwnProperty(key)) {
-                    this.errors[key] = value[key];
-                }
-            }
-        },
-        closeModal() {
-            this.modalOpen = false
+        navigateToStep(step) {
+            this.prev.push(this.step);
+            this.step = step;
         },
 
-    },
+        handleSuccess(data, nextStep) {
+            this.updateCurrentData(data);
+            this.navigateToStep(nextStep);
+        },
+
+        updateCurrentData(data) {
+            const current = this.step <= this.STEPS.AGE ? 'user' 
+                : this.step <= this.STEPS.CREATION_SELECT ? 'guardian' 
+                : 'child';
+            
+            Object.assign(this[current], data);
+        },
+
+        reset() {
+            this.step = this.STEPS.PHONE;
+            this.prev = [];
+            this.user = { phone: null, email: null, selection: null, selected: null, primary: false, age: 3 };
+            this.guardian = { phone: null, email: null, selection: null, selected: null };
+            this.child = { phone: null, email: null, selection: null, selected: null };
+            this.registration.errors = {};
+        }
+    }
 };
 </script>
 

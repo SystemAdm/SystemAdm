@@ -1,6 +1,6 @@
 <template>
     <label class="block text-gray-700 text-sm font-bold mb-2" for="lastname">
-        <span class="block text-gray-400 text-sm">If not set, you will be treated as less than 13 years old</span>
+        <span class="block text-gray-400 text-sm">If not set, you will be treated as less than 13 years old. <span class="text-red-500">*</span></span>
     </label>
     <!-- INPUT TEXT PHONE -->
     <input
@@ -13,9 +13,10 @@
         :class="{'border-red-700':hasErrors.birthday}"
         v-on:change="setAge"
         v-on:focus="sendErrors({birthday: false})">
-    <span class="mt-2 gap-5 inline-flex"><PegiComponent :age="age"></PegiComponent><EsrbComponent :age="age"></EsrbComponent></span>
+    <span class="mt-2 gap-5 inline-flex"><PegiComponent :age="age"></PegiComponent><EsrbComponent
+        :age="age"></EsrbComponent></span>
     <span class="ml-3 mt-2 block text-red-700" v-if="hasErrors.birthday">{{ hasErrors.birthday }}</span>
-    <ButtonBar :next="true" @go="birth"></ButtonBar>
+    <ButtonBar :next="true" :required="true" :prev="prev" @back="back" @go="birth" @close="$emit('close')"></ButtonBar>
 </template>
 <script>
 import {DateTime} from "luxon";
@@ -25,15 +26,16 @@ import EsrbComponent from "./EsrbComponent.vue";
 
 export default {
     components: {EsrbComponent, PegiComponent, ButtonBar},
-    emits: ['sendErrors', 'birth','close'],
+    emits: ['sendErrors', 'success', 'close','back'],
     props: {
         hasErrors: Object,
+        prev:Array,
     },
     data() {
         return {
             minDate: '',
             birthday: null,
-            age:3,
+            age: 3,
         }
     },
     methods: {
@@ -41,7 +43,7 @@ export default {
             this.$emit('sendErrors', value);
         },
         birth() {
-            this.$emit('birth', this.birthday);
+            this.$emit('success', {birthday: this.birthday,age:this.age});
         },
         setAge() {
             let birth = DateTime.fromISO(this.birthday);
@@ -50,7 +52,10 @@ export default {
                 return;
             }
             let today = DateTime.now();
-            this.age = Math.max(Math.floor(today.diff(birth,'years').years),3);
+            this.age = Math.max(Math.floor(today.diff(birth, 'years').years), 3);
+        },
+        back(step) {
+            this.$emit('back', step);
         }
     },
     mounted() {

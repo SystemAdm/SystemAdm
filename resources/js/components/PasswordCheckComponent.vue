@@ -17,7 +17,7 @@
             v-on:focus="sendErrors({password: false})">
         <span class="ml-3 mt-2 block text-red-700" v-if="hasErrors.password">{{ hasErrors.password }}</span>
     </div>
-    <ButtonBar :next="true" @close="$emit('close')" @go="check" @back="back"></ButtonBar>
+    <ButtonBar :prev="prev" :next="true" @close="$emit('close')" @go="check" @back="back"></ButtonBar>
 </template>
 <script>
 import axios from "axios";
@@ -26,8 +26,9 @@ import ButtonBar from "./ButtonBar.vue";
 export default {
     components: {ButtonBar},
     props: {
+        prev: Array,
         hasErrors: Object,
-        user: {
+        selected: {
             type: Object,
             required: true
         },
@@ -47,7 +48,7 @@ export default {
                 this.sendErrors({password: 'A password must be given'});
                 return;
             }
-            axios.post('/api/users/check', {p: this.password,u:this.user.id}).then(response => {
+            axios.post('/api/users/check', {p: this.password, u: this.selected.id}).then(response => {
                 if (response.data === true) {
                     this.$emit('success', true);
                 } else {
@@ -55,8 +56,8 @@ export default {
                 }
             });
         },
-        back() {
-
+        back(step) {
+            this.$emit('back', step);
         }
     }
 }

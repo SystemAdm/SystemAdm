@@ -2,7 +2,6 @@
 
 namespace App\Models;
 
-// use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
@@ -27,9 +26,9 @@ class User extends Authenticatable
      * @var array<int, string>
      */
     protected $fillable = [
-        'first_name',
-        'last_name',
-        'middle_name',
+        'given_name',
+        'additional_name',
+        'family_name',
         'password',
     ];
 
@@ -48,48 +47,165 @@ class User extends Authenticatable
      *
      * @return array<string, string>
      */
-    protected function casts(): array
+    protected $casts = [
+        'password' => 'hashed',
+        'deleted_at' => 'datetime',
+    ];
+
+    protected $appends = [
+        'full_name',
+        'display_name',
+        'sort_name'     // for sorting (family_name, given_name)
+    ];
+
+    /**
+     * Get user's full name (given + additional + family)
+     */
+    public function getFullNameAttribute(): string
     {
-        return [
-            'email_verified_at' => 'datetime',
-            'password' => 'hashed',
-        ];
+        return trim(implode(' ', array_filter([
+            $this->given_name,
+            $this->additional_name,
+            $this->family_name
+        ])));
     }
 
-    protected $appends = ['fullname','rank'];
+    /**
+     * Get user's display name (given + family)
+     */
+    public function getDisplayNameAttribute(): string
+    {
+        return trim(implode(' ', array_filter([
+            $this->given_name,
+            $this->family_name
+        ])));
+    }
 
+    /**
+     * Get sortable name format (family, given additional)
+     */
+    public function getSortNameAttribute(): string
+    {
+        $givenAndAdditional = trim(implode(' ', array_filter([
+            $this->given_name,
+            $this->additional_name
+        ])));
+        
+        return trim(implode(', ', array_filter([
+            $this->family_name,
+            $givenAndAdditional
+        ])));
+    }
+
+    /**
+     * Set the user's given name with capitalized first letter
+     */
+    protected function givenName(): Attribute
+    {
+        return Attribute::make(
+            set: fn (string $value) => ucfirst(trim($value))
+        );
+    }
+
+    /**
+     * Set the user's additional name with capitalized first letter
+     */
+    protected function additionalName(): Attribute
+    {
+        return Attribute::make(
+            set: fn (?string $value) => $value ? ucfirst(trim($value)) : null
+        );
+    }
+
+    /**
+     * Set the user's family name with capitalized first letter
+     */
+    protected function familyName(): Attribute
+    {
+        return Attribute::make(
+            set: fn (string $value) => ucfirst(trim($value))
+        );
+    }
+
+    /**
+     * Get all phone numbers associated with the user
+     *
+     * @return BelongsToMany<Phone>
+     */
     public function phones(): BelongsToMany
     {
         return $this->belongsToMany(Phone::class);
     }
 
+    /**
+     * Get all email addresses associated with the user
+     *
+     * @return BelongsToMany<Email>
+     */
     public function emails(): BelongsToMany
     {
         return $this->belongsToMany(Email::class);
     }
 
+    /**
+     * Get the user's username
+     *
+     * @return HasOne<Username>
+     */
     public function username(): HasOne
     {
         return $this->hasOne(Username::class);
     }
 
-    public function getFullnameAttribute(): string
-    {
-        return $this->first_name . ' ' . $this->last_name;
-    }
-
+    /**
+     * Get all memberships associated with the user
+     *
+     * @return HasMany<Membership>
+     */
     public function memberships(): HasMany
     {
         return $this->hasMany(Membership::class);
     }
 
+    /**
+     * Get the user's profile
+     *
+     * @return HasOne<Profile>
+     */
     public function profile(): HasOne
     {
         return $this->hasOne(Profile::class);
     }
 
-    public function getRankAttribute()
+    /**
+     * Get the user's guardians/parents
+     *
+     * @return BelongsToMany<User>
+     */
+    public function guardians(): BelongsToMany
+    {
+        return $this->belongsToMany(User::class, 'guardians', 'user_id', 'guardian_id');
+    }
+
+    /**
+     * Get the user's children/wards
+     *
+     * @return BelongsToMany<User>
+     */
+    public function children(): BelongsToMany
+    {
+        return $this->belongsToMany(User::class, 'guardians', 'guardian_id', 'user_id');
+    }
+
+    /**
+     * Get the user's highest ranked role
+     *
+     * @return object|null The highest ranked role or null if no roles exist
+     */
+    public function getRankAttribute(): ?object
     {
         return $this->roles()->orderBy('rank')->first() ?? null;
     }
+
+    
 }

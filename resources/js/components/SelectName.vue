@@ -1,55 +1,118 @@
 <template>
-    <label for="name">From your phone number, we found a registration on our site! We need a confirmation from you.<br/><span class="font-bold" :class="{'text-red-500 text-xl':hasErrors.select_name}">Are you among us?:</span></label>
-    <div class="flex justify-center" v-for="name in selection" :key="name.id">
-        <div class="text-gray-500 font-bold flex " @click="selectedName = name.id">
-            <input class="hidden" type="radio" id="name" v-model="selectedName" :value="name.id" required>
-            <div @click="error({select_name:false})" :class="['border-4 p-1 transition-all duration-300',selectedName === name.id ? 'border-blue-500' : 'border-transparent']" class="justify-center">
-                <img :src="name.profile.image" alt="User Avatar" class="w-12 h-12 rounded-full object-cover m-auto">
-                <span class=" text-sm "><font-awesome-icon class="text-orange-500" v-if="name.active" :icon="['fas','lock']" />&nbsp;{{ name.first_name }}</span>
+    <div>
+        <h2 v-if="guardian" class="text-3xl">{{ title }}</h2>
+        
+        <label for="name" class="block">
+            {{ t('auth.found_registration') }}<br/>
+            <span class="font-bold" :class="{'text-red-500 text-xl': hasErrors.select_name}">
+                {{ t('auth.select_user') }}
+            </span>
+        </label>
+
+        <!-- Brukervalg -->
+        <div class="flex justify-center" v-for="name in selection" :key="name.id">
+            <div class="text-gray-500 font-bold flex" @click="selectName(name.id)">
+                <input 
+                    type="radio" 
+                    class="hidden" 
+                    id="name" 
+                    v-model="selected_name" 
+                    :value="name.id" 
+                    required
+                >
+                <div 
+                    class="border-4 p-1 transition-all duration-300 justify-center"
+                    :class="[isSelected(name) ? 'border-blue-500' : 'border-transparent']"
+                >
+                    <img 
+                        :src="name.profile.image" 
+                        :alt="t('auth.user_avatar')" 
+                        class="w-12 h-12 rounded-full object-cover m-auto"
+                    >
+                    <span class="text-sm">
+                        <font-awesome-icon 
+                            v-if="name.active" 
+                            class="text-orange-500" 
+                            :icon="['fas','lock']"
+                        />&nbsp;{{ name.given_name }}
+                    </span>
+                </div>
             </div>
         </div>
+
+        <!-- "Noen andre" valget -->
+        <div class="justify-self-start mb-5">
+            <label class="text-black font-bold">
+                <input 
+                    @select="sendErrors({select_name:false})" 
+                    class="mr-2 leading-tight" 
+                    type="radio" 
+                    name="restriction"
+                    id="attending_crew" 
+                    v-model="selected_name" 
+                    :value="0"
+                >
+                <span class="text-xl">{{ t('auth.someone_else') }}</span>
+            </label>
+        </div>
+
+        <ButtonBar 
+            :next="true" 
+            :prev="prev" 
+            @back="back" 
+            @go="go" 
+            @close="$emit('close')"
+        />
     </div>
-    <div class="justify-self-start mb-5">
-        <label class="text-black font-bold">
-            <input @select="error({select_name:false})" class="mr-2 leading-tight" type="radio" name="restriction" id="attending_crew" v-model="selectedName" :value="0">
-            <span class="text-xl">Nah. I am someone else</span>
-        </label>
-    </div>
-    <ButtonBar :next="true" @go="go" @close="$emit('close')"></ButtonBar>
 </template>
 <script>
 import ButtonBar from "./ButtonBar.vue";
-import {FontAwesomeIcon} from "@fortawesome/vue-fontawesome";
+import { FontAwesomeIcon } from "@fortawesome/vue-fontawesome";
 
 export default {
-    components: {FontAwesomeIcon, ButtonBar},
-    emits:['selectUser','sendErrors','close'],
-    props:{
-        selection:{
-            type:Object,
-        },
-        hasErrors:{
-            type:Object,
-        }
+    name: 'SelectName',
+    components: { 
+        FontAwesomeIcon, 
+        ButtonBar 
+    },
+    
+    setup() {
+        const { t } = useI18n();
+        return { t };
+    },
+    
+    emits: ['success', 'sendErrors', 'close', 'back'],
+    props: {
+        prev: Array,
+        selection: Object,
+        hasErrors: Object,
+        selected: Object,
+        guardian: {type:Boolean, default: false,},
     },
     data() {
         return {
-            selectedName: null,
+            selected_name: null,
         }
     },
-    methods:{
-        go(){
-            if(this.selectedName === null){
-                this.error({select_name:true});
+    methods: {
+        go() {
+            if (this.selected_name === null) {
+                this.sendErrors({select_error: true});
             } else {
-                this.$emit('selectUser', (this.selectedName !== 0)?this.selection[this.selectedName]:0);
+                this.$emit('success', (this.selected_name !== 0) ? this.selection[this.selected_name] : 0);
             }
-        }, error(value) {
-            this.$emit('sendErrors',value);
+        },
+        sendErrors(value) {
+            this.$emit('sendErrors', value);
+        },
+        back(step) {
+            this.$emit('back', step);
         }
     },
-    mounted() {
-        console.log(this.selection)
+    computed: {
+        title() {
+            return this.guardian ? this.t('auth.guardian_parent') : this.t('auth.among_us');
+        }
     }
 }
 </script>

@@ -7,11 +7,10 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Carbon;
-use Illuminate\Support\Facades\Storage;
 
 class Event extends Model
 {
-    use softDeletes;
+    use SoftDeletes;
 
     protected $fillable = [
         'event_begin',
@@ -24,10 +23,16 @@ class Event extends Model
         'image',
         'location_id'
     ];
-    private array $days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
-    private array $dager = ['Man.', 'Tir.', 'Ons.', 'Tor.', 'Fre.', 'Lør.', 'Søn.'];
-    private array $months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-    private array $maneder = ['Jan.', 'Feb.', 'Mar.', 'Apr.', 'Mai', 'Jun.', 'Jul.', 'Aug.', 'Sep.', 'Okt.', 'Nov.', 'Des.'];
+
+    protected $casts = [
+        'event_begin' => 'datetime',
+        'event_end' => 'datetime',
+        'signup_begin' => 'datetime',
+        'signup_end' => 'datetime',
+        'deleted_at' => 'datetime',
+        'registration_needed' => 'boolean',
+    ];
+
     protected $appends = [
         'images',
         'event_begin_date',
@@ -46,149 +51,246 @@ class Event extends Model
         'event_date',
     ];
 
-    function location(): BelongsTo
+    private const DAYS = [
+        'Mon' => 'Man.',
+        'Tue' => 'Tir.',
+        'Wed' => 'Ons.',
+        'Thu' => 'Tor.',
+        'Fri' => 'Fre.',
+        'Sat' => 'Lør.',
+        'Sun' => 'Søn.'
+    ];
+
+    private const MONTHS = [
+        'Jan' => 'Jan.',
+        'Feb' => 'Feb.',
+        'Mar' => 'Mar.',
+        'Apr' => 'Apr.',
+        'May' => 'Mai',
+        'Jun' => 'Jun.',
+        'Jul' => 'Jul.',
+        'Aug' => 'Aug.',
+        'Sep' => 'Sep.',
+        'Oct' => 'Okt.',
+        'Nov' => 'Nov.',
+        'Dec' => 'Des.'
+    ];
+
+    /**
+     * Get the location associated with the event
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo<Location>
+     */
+    public function location(): BelongsTo
     {
         return $this->belongsTo(Location::class);
     }
 
-    function getEventBeginDateAttribute(): array|string
-    {
-        return $this->date($this->attributes['event_begin']);
-    }
-
-    function getEventEndDateAttribute(): array|string
-    {
-        return $this->date($this->attributes['event_end']);
-    }
-
-    function getSignupBeginDateAttribute(): array|string
-    {
-        return $this->date($this->attributes['signup_begin']);
-    }
-
-    function getSignupEndDateAttribute(): array|string
-    {
-        return $this->date($this->attributes['signup_end']);
-    }
-
-    function getSignupBeganAttribute(): bool
-    {
-        return $this->signup_start < Carbon::now();
-    }
-
-    function getSignupEndedAttribute(): bool
-    {
-        $now = Carbon::now();
-        return $this->signup_start < $now && $this->signup_end < $now;
-    }
-
-    function getEventBeganAttribute(): bool
-    {
-        return $this->event_begin > Carbon::now() && $this->event_end < Carbon::now();
-    }
-
-    function getEventEndedAttribute(): bool
-    {
-        return $this->event_end > Carbon::now();
-    }
-
-    function getSeatsAvailableAttribute()
-    {
-        if ($this->seats == -1) return false;
-        if ($this->seats == 0) return true;
-        else  return $this->seats - $this->registered->count();
-    }
-
-    function registered(): BelongsToMany
+    /**
+     * Get users registered for the event
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\BelongsToMany<User>
+     */
+    public function registered(): BelongsToMany
     {
         return $this->belongsToMany(User::class, 'event_registered')->withTimestamps();
     }
 
-    function registeredCrew(): BelongsToMany
+    /**
+     * Get crew members registered for the event
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\BelongsToMany<User>
+     */
+    public function registeredCrew(): BelongsToMany
     {
         return $this->belongsToMany(User::class, 'event_registered_crew')->withTimestamps();
     }
 
-    function attending(): BelongsToMany
+    /**
+     * Get users attending the event
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\BelongsToMany<User>
+     */
+    public function attending(): BelongsToMany
     {
         return $this->belongsToMany(User::class, 'event_attending')->withTimestamps();
     }
 
-    function attendingCrew(): BelongsToMany
+    /**
+     * Get crew members attending the event
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\BelongsToMany<User>
+     */
+    public function attendingCrew(): BelongsToMany
     {
         return $this->belongsToMany(User::class, 'event_attending_crew')->withTimestamps();
     }
 
-    function insider(): BelongsToMany
+    /**
+     * Get insider users for the event
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\BelongsToMany<User>
+     */
+    public function insider(): BelongsToMany
     {
         return $this->belongsToMany(User::class, 'event_inside')->withTimestamps();
     }
 
-    function insiderCrew(): BelongsToMany
+    /**
+     * Get insider crew members for the event
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\BelongsToMany<User>
+     */
+    public function insiderCrew(): BelongsToMany
     {
         return $this->belongsToMany(User::class, 'event_inside_crew')->withTimestamps();
     }
 
-    function getDurationDaysAttribute()
-    {
-        $begin = new Carbon($this->event_begin);
-        $end = new Carbon($this->event_end);
-        return $begin->diff($end)->d;
-    }
-    function getDurationHoursAttribute()
-    {
-        $begin = new Carbon($this->event_begin);
-        $end = new Carbon($this->event_end);
-        return $begin->diff($end)->hours;
-    }
-
-    function getEventDateAttribute(){
-        $carbon = new Carbon($this->event_begin);
-        $string = $carbon->format('D d M Y');
-        $string = str_replace($this->days, $this->dager, $string);
-        return ucfirst(strtolower(str_replace($this->months, $this->maneder, $string)));
-    }
-
-    function getEventTimeStartAttribute()
-    {
-        $begin = new Carbon($this->event_begin);
-        return $begin->format('H:i');
-    }
-
-    function getEventTimeEndAttribute()
-    {
-        $end = new Carbon($this->event_end);
-        return $end->format('H:i');
-    }
-
-    function date($date): array|string
+    private function formatDate(string $date): string
     {
         $carbon = new Carbon($date);
         $string = $carbon->format('D d M Y H:i');
-        $string = str_replace($this->days, $this->dager, $string);
-        return ucfirst(strtolower(str_replace($this->months, $this->maneder, $string)));
+        $string = strtr($string, self::DAYS);
+        return ucfirst(strtolower(strtr($string, self::MONTHS)));
     }
-    public function getImagesAttribute()
+
+    /**
+     * Get formatted event begin date
+     */
+    public function getEventBeginDateAttribute(): string
+    {
+        return $this->formatDate($this->event_begin);
+    }
+
+    /**
+     * Get formatted event end date
+     */
+    public function getEventEndDateAttribute(): string
+    {
+        return $this->formatDate($this->event_end);
+    }
+
+    /**
+     * Get formatted signup begin date
+     */
+    public function getSignupBeginDateAttribute(): string
+    {
+        return $this->formatDate($this->signup_begin);
+    }
+
+    /**
+     * Get formatted signup end date
+     */
+    public function getSignupEndDateAttribute(): string
+    {
+        return $this->formatDate($this->signup_end);
+    }
+
+    /**
+     * Check if signup period has started
+     */
+    public function getSignupBeganAttribute(): bool
+    {
+        return Carbon::parse($this->signup_begin)->isPast();
+    }
+
+    /**
+     * Check if signup period has ended
+     */
+    public function getSignupEndedAttribute(): bool
+    {
+        return Carbon::parse($this->signup_end)->isPast();
+    }
+
+    /**
+     * Check if event has started
+     */
+    public function getEventBeganAttribute(): bool
+    {
+        return Carbon::parse($this->event_begin)->isPast() 
+            && Carbon::parse($this->event_end)->isFuture();
+    }
+
+    /**
+     * Check if event has ended
+     */
+    public function getEventEndedAttribute(): bool
+    {
+        return Carbon::parse($this->event_end)->isPast();
+    }
+
+    /**
+     * Get number of available seats
+     * Returns false if unlimited seats (-1)
+     * Returns true if no seats (0)
+     * Returns number of remaining seats otherwise
+     */
+    public function getSeatsAvailableAttribute(): bool|int
+    {
+        if ($this->seats === -1) return false;
+        if ($this->seats === 0) return true;
+        return $this->seats - $this->registered->count();
+    }
+
+    /**
+     * Get event duration in days
+     */
+    public function getDurationDaysAttribute(): int
+    {
+        return Carbon::parse($this->event_begin)
+            ->diffInDays(Carbon::parse($this->event_end));
+    }
+
+    /**
+     * Get event duration in hours
+     */
+    public function getDurationHoursAttribute(): int
+    {
+        return Carbon::parse($this->event_begin)
+            ->diffInHours(Carbon::parse($this->event_end));
+    }
+
+    public function getEventDateAttribute(): string
+    {
+        $carbon = new Carbon($this->event_begin);
+        $string = $carbon->format('D d M Y');
+        $string = strtr($string, self::DAYS);
+        return ucfirst(strtolower(strtr($string, self::MONTHS)));
+    }
+
+    /**
+     * Get event start time in H:i format
+     */
+    public function getEventTimeStartAttribute(): string
+    {
+        return Carbon::parse($this->event_begin)->format('H:i');
+    }
+
+    /**
+     * Get event end time in H:i format
+     */
+    public function getEventTimeEndAttribute(): string
+    {
+        return Carbon::parse($this->event_end)->format('H:i');
+    }
+
+    /**
+     * Get event images with proper MIME type
+     */
+    public function getImagesAttribute(): \Illuminate\Http\Response
     {
         $image = null;
-        $mimeType = 'image/png'; // Default MIME type
+        $mimeType = 'image/png';
 
-        if ($this->image == null) {
-            // Use default image when $this->image is null
-            $imagePath = public_path('images/logos/spillhuset-logo-black.png');
-        } else {
-            // Use image from storage
-            $imagePath = storage_path('app/public/images/events/' . $this->image);
-        }
+        $imagePath = $this->image
+            ? storage_path('app/public/images/events/' . $this->image)
+            : public_path('images/logos/spillhuset-logo-black.png');
 
-        // Check if the file exists to avoid errors
         if (file_exists($imagePath)) {
-            // Determine the MIME type (supports PNG and JPEG)
-            $mimeType = mime_content_type($imagePath); // Detects the actual MIME type
+            $mimeType = mime_content_type($imagePath);
             $image = base64_encode(file_get_contents($imagePath));
         }
 
-        // Return the base64-encoded image with the detected MIME type
         return response($image)->header('Content-Type', $mimeType);
     }
 }

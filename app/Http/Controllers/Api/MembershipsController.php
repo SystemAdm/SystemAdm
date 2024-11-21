@@ -27,15 +27,24 @@ class MembershipsController extends Controller
     public function store(Request $request)
     {
         $validated = $request->validate([
+            'payment_intent_id' => ['required', 'string'],
             'success' => ['required', 'boolean'],
+            'gifted' => ['boolean'],
         ]);
+
         $user = auth()->user();
-        $membership = new Membership([
-            'online' => true,
-            'valid_to' => now()->addYear()
+        $transaction = new Membership([
+            'user_id' => $user->id,
+            'gifted' => $validated['gifted'] ?? false,
+            'online' => true,    // Alltid true for Stripe
+            'cash' => false,     // Alltid false for Stripe
+            'vipps' => false,    // Alltid false for Stripe
+            'card' => true,      // Alltid true for Stripe
+            'valid_to' => now()->addYear(),
         ]);
-        $user->memberships()->save($membership);
-        return response()->json($membership);
+        
+        $user->memberships()->save($transaction);
+        return response()->json($transaction);
     }
 
     /**
@@ -62,14 +71,20 @@ class MembershipsController extends Controller
         //
     }
 
+    /**
+     * Generer Stripe client secret
+     */
     public function pay(Request $request)
     {
-        Stripe::setApiKey(env('STRIPE_SECRET'));
+        Stripe::setApiKey(config('services.stripe.secret'));
 
         $paymentIntent = PaymentIntent::create([
-            'amount' => 15000,
-            'currency' => 'nok',
+            'amount' => config('memberships.price', 15000),
+            'currency' => config('memberships.currency', 'nok'),
             'payment_method_types' => ['card'],
+            'metadata' => [
+                'user_id' => auth()->id()
+            ]
         ]);
 
         return response()->json(['clientSecret' => $paymentIntent->client_secret]);

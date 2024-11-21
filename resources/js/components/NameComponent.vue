@@ -1,11 +1,13 @@
 <template>
+    <h2 class="text-3xl" v-show="guardian">Guardian/Parent</h2>
     <div class="mb-4">
         <label class="block text-gray-700 text-sm font-bold mb-2" for="firstname">Firstname <span
             class="text-red-700">*</span></label>
         <!-- INPUT NAME FIRST -->
         <input
             class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-            id="firstname" type="text" placeholder="Firstname" v-model="firstname" :class="{'border-red-700':hasErrors.firstname}" v-on:focus="errors({firstname: false})">
+            id="firstname" type="text" placeholder="Firstname" v-model="firstname"
+            :class="{'border-red-700':hasErrors.firstname}" v-on:focus="errors({firstname: false})">
         <span class="mb-5 block text-red-700" v-if="hasErrors.firstname">{{ hasErrors.firstname }}</span>
     </div>
     <div class="mb-4">
@@ -14,7 +16,8 @@
         <!-- INPUT NAME MIDDLE -->
         <input
             class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-            id="middlename" type="text" placeholder="Middlename" v-model="middlename" :class="{'border-red-700':hasErrors.middlename}" v-on:focus="errors({middlename: false})">
+            id="middlename" type="text" placeholder="Middlename" v-model="middlename"
+            :class="{'border-red-700':hasErrors.middlename}" v-on:focus="errors({middlename: false})">
         <span class="mb-5 block text-red-700" v-if="hasErrors.middlename">{{ hasErrors.middlename }}</span>
     </div>
     <div class="mb-4">
@@ -23,10 +26,11 @@
         <!-- INPUT NAME LAST -->
         <input
             class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-            id="lastname" type="text" placeholder="Lastname" v-model="lastname" :class="{'border-red-700':hasErrors.lastname}" v-on:focus="errors({lastname: false})">
+            id="lastname" type="text" placeholder="Lastname" v-model="lastname"
+            :class="{'border-red-700':hasErrors.lastname}" v-on:focus="errors({lastname: false})">
         <span class="mb-5 block text-red-700" v-if="hasErrors.lastname">{{ hasErrors.lastname }}</span>
     </div>
-    <ButtonBar :next="true" :required="true" @go="go" @close="$emit('close')"></ButtonBar>
+    <ButtonBar :next="true" @back="back" :prev="prev" :required="true" @go="go" @close="$emit('close')"></ButtonBar>
 </template>
 <script>
 import ButtonBar from "./ButtonBar.vue";
@@ -34,15 +38,13 @@ import axios from "axios";
 
 export default {
     components: {ButtonBar},
-    emits: ['user', 'sendErrors','close'],
+    emits: ['success', 'sendErrors', 'close', 'back'],
     props: {
-        hasErrors: {
-            type: Object,
-        },
-        phone:{
-            type:String,
-            required: true,
-        }
+        hasErrors: Object,
+        prev: Array,
+        guardian: {type: Boolean, default: false,},
+        phone: String,
+        email: String,
     },
     data() {
         return {
@@ -54,6 +56,9 @@ export default {
     methods: {
         errors(value) {
             this.$emit('sendErrors', value)
+        },
+        back(step) {
+            this.$emit('back', step);
         },
         go() {
             if (this.firstname == null || this.firstname === '') {
@@ -72,16 +77,17 @@ export default {
                 }
             }
             if (!this.hasErrors.firstname || !this.hasErrors.firstname || !this.hasErrors.middlename) {
-                axios.post('/api/users',{firstname:this.firstname,middlename:this.middlename,lastname:this.lastname}).then(response => {
-                    this.$emit('user',response.data);
+                axios.post('/api/users', {
+                    firstname: this.firstname,
+                    middlename: this.middlename,
+                    lastname: this.lastname,
+                    phone: this.phone,
+                    email:this.email
+                }).then(response => {
+                    this.$emit('success', response.data);
                 }).catch(error => {
                     this.$emit('sendErrors', error.response.data.errors);
                 });
-                /*this.$emit('user', {
-                    first_name: this.firstname,
-                    middle_name: this.middlename,
-                    last_name: this.lastname
-                });*/
             }
         }
     }

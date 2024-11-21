@@ -7,29 +7,35 @@ import LaravelPermissionToVueJS from 'laravel-permission-to-vuejs'
 import axios from "axios";
 import {FontAwesomeIcon} from "@fortawesome/vue-fontawesome";
 import {library} from '@fortawesome/fontawesome-svg-core'
+import {i18nVue} from 'laravel-vue-i18n'
 import {
     faArrowLeft,
     faArrowRight,
-    faBars, faCheck, faClock,
+    faBars,
+    faCheck,
+    faClock,
     faEnvelope,
     faIdCard,
     faLock,
     faMagnifyingGlass,
     faMapMarker,
+    faPeoplePulling,
     faPhone,
     faQrcode,
     faShield,
-    faTrashCan, faTrashCanArrowUp,
-    faUser, faXmark
+    faTrashCan,
+    faTrashCanArrowUp,
+    faUser,
+    faXmark
 } from '@fortawesome/free-solid-svg-icons'
 
-library.add(faUser, faMagnifyingGlass, faEnvelope, faPhone, faMapMarker, faShield, faQrcode, faIdCard, faBars, faTrashCan, faArrowRight, faArrowLeft, faLock,faClock, faCheck,faTrashCanArrowUp,faXmark);
+library.add(faUser, faMagnifyingGlass, faEnvelope, faPhone, faMapMarker, faShield, faQrcode, faIdCard, faBars, faTrashCan, faArrowRight, faArrowLeft, faLock, faClock, faCheck, faTrashCanArrowUp, faXmark, faPeoplePulling);
 axios.defaults.withCredentials = true;
 
 // Define routes
 const routes = [
-    {name: 'AdminRules',path: '/admins/rules',component: () => import('./components/admin/pages/RulesIndex.vue')},
-    {name:'RulesIndex',path: '/rules',component: () => import('./components/pages/RulesIndex.vue')},
+    {name: 'AdminRules', path: '/admins/rules', component: () => import('./components/admin/pages/RulesIndex.vue')},
+    {name: 'RulesIndex', path: '/rules', component: () => import('./components/pages/RulesIndex.vue')},
     {name: 'Membership', path: '/member', component: () => import('./components/pages/Membership.vue')},
     {name: 'Index', path: '/', component: () => import('./components/pages/Home.vue')}, // Home should be loaded on the root route
     {name: 'Events', path: '/events', component: () => import('./components/pages/Events.vue')},
@@ -52,10 +58,16 @@ const router = createRouter({
     routes,
 });
 
-
 // Create and mount the app
 createApp(App)
     .component('font-awesome-icon', FontAwesomeIcon)
+    .use(i18nVue, {
+        lang: 'no',
+        resolve: async lang => {
+            const langs = import.meta.glob('../../lang/*.json');
+            return await langs[`../../lang/${lang}.json`]();
+        }
+    })
     .use(router)
     .use(Notifications)
     .use(LaravelPermissionToVueJS)

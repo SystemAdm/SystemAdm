@@ -2,7 +2,6 @@
     <h2 class="text-3xl" v-if="guardian">Guardian/Parent</h2>
     <label class="block text-gray-700 text-sm font-bold mb-2" for="email">
         E-mail address <span class="text-red-700">*</span>
-        <span class="block text-gray-400 text-sm">We will only send you critical, but insensitive information. Ex. reset password</span>
     </label>
     <!-- INPUT TEXT PHONE -->
     <input
@@ -15,24 +14,6 @@
         :class="{'border-red-700':hasErrors.email}"
         v-on:focus="sendErrors({email: false})">
     <span class="ml-3 mt-2 block text-red-700" v-if="hasErrors.email">{{ hasErrors.email }}</span>
-    <label class="block text-gray-700 text-sm font-bold mb-2 mt-5" for="email_confirm">
-        E-mail address confirmation<span class="text-red-700">*</span>
-        <span
-            class="block text-gray-400 text-sm">Please confirm you e-mail address by retyping it</span>
-    </label>
-    <!-- INPUT TEXT PHONE -->
-    <input
-        class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-        id="email_confirm"
-        type="email"
-        placeholder="E-mail address confirmation"
-        v-model="this.email_confirm"
-        required
-        :class="{'border-red-700':hasErrors.email_confirm}"
-        v-on:focus="sendErrors({email_confirm: false})">
-    <span class="ml-3 mt-2 block text-red-700" v-if="hasErrors.email_confirm">{{
-            hasErrors.email_confirm
-        }}</span>
     <span class="block text-sm hover:cursor-pointer my-2 text-blue-700" @click="$emit('phone')">Can I log in with phone number instead?</span>
     <ButtonBar :next="true" @go="next" :required="true"></ButtonBar>
 </template>
@@ -47,7 +28,7 @@ export default {
         prev:Array,
         guardian: {type:Boolean, default: false,},
     },
-    emits: ['sendErrors', 'close', 'phone', 'success'],
+    emits: ['sendErrors', 'close', 'phone', 'success','back'],
     data() {
         return {
             email: null,
@@ -60,10 +41,12 @@ export default {
         },
         next() {
             if (this.email == null) this.sendErrors({email: 'Field is mandatory'});
-            if (this.email_confirm == null) this.sendErrors({email_confirm: 'Field is mandatory'});
-            if (!this.hasErrors.email && !this.hasErrors.email_confirm) {
-                axios.post('/api/users/verify_email').then(result => {
-                    this.$emit('success', result.data);
+            if (!this.hasErrors.email) {
+                axios.post('/api/users/validate_email',{email:this.email}).then(result => {
+                    if (result.data === 0){
+                        this.sendErrors({email:"Invalid e-mail address"})
+                    }
+                     else {this.$emit('success', {email:this.email,data:result.data});}
                 }).catch(() => {
                     this.sendErrors({email: "Something went wrong"});
                 });
