@@ -146,8 +146,12 @@ class Event extends Model
         return $this->belongsToMany(User::class, 'event_inside_crew')->withTimestamps();
     }
 
-    private function formatDate(string $date): string
+    private function formatDate(?string $date): string
     {
+        if ($date === null) {
+            return '';
+        }
+        
         $carbon = new Carbon($date);
         $string = $carbon->format('D d M Y H:i');
         $string = strtr($string, self::DAYS);
@@ -237,8 +241,8 @@ class Event extends Model
      */
     public function getDurationDaysAttribute(): int
     {
-        return Carbon::parse($this->event_begin)
-            ->diffInDays(Carbon::parse($this->event_end));
+        return (int) round(Carbon::parse($this->event_begin)
+            ->diffInDays(Carbon::parse($this->event_end), false));
     }
 
     /**
@@ -246,8 +250,8 @@ class Event extends Model
      */
     public function getDurationHoursAttribute(): int
     {
-        return Carbon::parse($this->event_begin)
-            ->diffInHours(Carbon::parse($this->event_end));
+        return (int) round(Carbon::parse($this->event_begin)
+            ->diffInHours(Carbon::parse($this->event_end), false));
     }
 
     public function getEventDateAttribute(): string

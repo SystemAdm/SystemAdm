@@ -1,65 +1,150 @@
 <template>
-    <label class="block text-gray-700 text-sm font-bold mb-2" for="lastname">
-        <span class="block text-gray-400 text-sm">If not set, you will be treated as less than 13 years old. <span class="text-red-500">*</span></span>
-    </label>
-    <!-- INPUT TEXT PHONE -->
-    <input
-        class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-        id="birthday"
-        type="date"
-        :max="minDate"
-        placeholder="Birthday"
-        v-model="birthday"
-        :class="{'border-red-700':hasErrors.birthday}"
-        v-on:change="setAge"
-        v-on:focus="sendErrors({birthday: false})">
-    <span class="mt-2 gap-5 inline-flex"><PegiComponent :age="age"></PegiComponent><EsrbComponent
-        :age="age"></EsrbComponent></span>
-    <span class="ml-3 mt-2 block text-red-700" v-if="hasErrors.birthday">{{ hasErrors.birthday }}</span>
-    <ButtonBar :next="true" :required="true" :prev="prev" @back="back" @go="birth" @close="$emit('close')"></ButtonBar>
+    <div>
+        <div class="mb-5">
+            <label class="block text-gray-700 text-sm font-bold mb-2" for="birthdate">
+                Fødselsdato <span class="text-red-700">*</span>
+            </label>
+            <input
+                class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                id="birthdate"
+                type="date"
+                v-model="birthdate"
+                required
+                :class="{'border-red-700': hasErrors.birthdate}"
+                @focus="sendErrors({birthdate: false})"
+                @change="calculateAge">
+            <span class="ml-3 mt-2 block text-red-700" v-if="hasErrors.birthdate">{{ hasErrors.birthdate }}</span>
+
+            <!-- Vis aldersgrenser når fødselsdato er valgt -->
+            <div v-if="calculatedAge" class="mt-5">
+                <label class="block text-gray-700 text-sm font-bold mb-2">
+                    Din aldersgrense
+                </label>
+                <div class="grid grid-cols-2 gap-4">
+                    <!-- PEGI -->
+                    <div>
+                        <h3 class="text-sm font-semibold mb-2">PEGI</h3>
+                        <div class="flex justify-center">
+                            <img 
+                                :src="`/images/pegi/age-${currentPegiAge}.jpg`" 
+                                :alt="`PEGI ${currentPegiAge}`"
+                                class="h-24 w-24 object-contain"
+                            >
+                        </div>
+                    </div>
+
+                    <!-- ESRB -->
+                    <div>
+                        <h3 class="text-sm font-semibold mb-2">ESRB</h3>
+                        <div class="flex justify-center">
+                            <img 
+                                :src="`/images/esrb/${currentEsrbRating.image}.svg`" 
+                                :alt="`ESRB ${currentEsrbRating.label}`"
+                                class="h-24 w-24 object-contain"
+                            >
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <ButtonBar 
+            :prev="prev" 
+            :next="true"
+            @close="$emit('close')" 
+            @go="validateAndContinue" 
+            @back="back"
+        ></ButtonBar>
+    </div>
 </template>
+
 <script>
-import {DateTime} from "luxon";
 import ButtonBar from "./ButtonBar.vue";
-import PegiComponent from "./PegiComponent.vue";
-import EsrbComponent from "./EsrbComponent.vue";
 
 export default {
-    components: {EsrbComponent, PegiComponent, ButtonBar},
-    emits: ['sendErrors', 'success', 'close','back'],
+    components: { ButtonBar },
     props: {
-        hasErrors: Object,
-        prev:Array,
+        prev: {
+            type: Array,
+            required: true
+        },
+        hasErrors: {
+            type: Object,
+            required: true
+        }
     },
     data() {
         return {
-            minDate: '',
-            birthday: null,
-            age: 3,
+            birthdate: null,
+            calculatedAge: null,
+            pegiAges: [3, 7, 12, 16, 18],
+            esrbRatings: [
+                { age: 3, label: 'Early Childhood', image: 'EC' },
+                { age: 6, label: 'Everyone', image: 'E' },
+                { age: 10, label: 'Everyone 10+', image: 'E10plus' },
+                { age: 13, label: 'Teen', image: 'T' },
+                { age: 17, label: 'Mature', image: 'M' },
+                { age: 18, label: 'Adults Only', image: 'AO' }
+            ]
+        }
+    },
+    computed: {
+        currentPegiAge() {
+            if (!this.calculatedAge) return null;
+            return this.pegiAges.reduce((prev, curr) => {
+                return (curr <= this.calculatedAge && curr > prev) ? curr : prev;
+            }, 0);
+        },
+        currentEsrbRating() {
+            if (!this.calculatedAge) return null;
+            return this.esrbRatings.reduce((prev, curr) => {
+                return (curr.age <= this.calculatedAge && curr.age > prev.age) ? curr : prev;
+            }, this.esrbRatings[0]);
         }
     },
     methods: {
         sendErrors(value) {
             this.$emit('sendErrors', value);
         },
-        birth() {
-            this.$emit('success', {birthday: this.birthday,age:this.age});
+        calculateAge() {
+            if (!this.birthdate) return;
+            
+            const today = new Date();
+            const birthDate = new Date(this.birthdate);
+            let age = today.getFullYear() - birthDate.getFullYear();
+            const monthDiff = today.getMonth() - birthDate.getMonth();
+            
+            if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
+                age--;
+            }
+            
+            this.calculatedAge = age;
         },
-        setAge() {
-            let birth = DateTime.fromISO(this.birthday);
-            if (!birth.isValid) {
-                this.age = 3;
+        validateAndContinue() {
+            if (!this.birthdate) {
+                this.sendErrors({birthdate: 'Fødselsdato må fylles ut'});
                 return;
             }
-            let today = DateTime.now();
-            this.age = Math.max(Math.floor(today.diff(birth, 'years').years), 3);
+            
+            if (!this.calculatedAge) {
+                this.sendErrors({birthdate: 'Ugyldig fødselsdato'});
+                return;
+            }
+
+            this.$emit('success', { 
+                birthdate: this.birthdate,
+                age: this.calculatedAge 
+            }, 7);
         },
         back(step) {
             this.$emit('back', step);
         }
-    },
-    mounted() {
-        this.minDate = DateTime.now().minus({years: 10}).toISODate();
-    },
+    }
 }
 </script>
+
+<style scoped>
+img {
+    max-width: 100%;
+    max-height: 100%;
+}
+</style>

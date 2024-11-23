@@ -4,51 +4,57 @@ use App\Http\Controllers\Api\EventsController;
 use App\Http\Controllers\Api\LocationsController;
 use App\Http\Controllers\Api\MembershipsController;
 use App\Http\Controllers\Api\UsersController;
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 
-Route::get('/user', function (Request $request) {
-    return $request->user();
-})->middleware('auth:sanctum');
-Route::post('/logout', function (Request $request) {
-    if ($request->user()) {
-        // Attempt to delete the current access token
-        $request->user()->currentAccessToken()->delete();
-        return response()->json(['message' => 'Successfully logged out']);
-    } else {
-        // If no user is found, return an error response for debugging
-        return response()->json(['message' => 'User not authenticated or token missing'], 401);
-    }
-})->middleware('auth:sanctum');
-Route::get('/get-permissions', function () {
-    return response()->json(auth()->check() ? auth()->user()->jsPermissions() : 0);
+// Auth routes
+Route::middleware('auth:sanctum')->group(function () {
+    Route::get('/user', fn (Request $request) => $request->user());
+    Route::post('/logout', [UsersController::class, 'logout']);
 });
-Route::get('events/short', [EventsController::class, 'shorts']);
-Route::get('events/images', [EventsController::class, 'getEventImages']);
-Route::post('events/{event}/register', [EventsController::class, 'register']);
-Route::apiResource('events', EventsController::class)->only(['index', 'show']);
+
+// Public routes
+Route::get('/get-permissions', fn () => response()->json(Auth::check() ? Auth::user()->jsPermissions() : 0));
+
+// Events routes
+Route::prefix('events')->group(function () {
+    Route::get('/', [EventsController::class, 'index']);
+    Route::get('/short', [EventsController::class, 'shorts']);
+    Route::get('/images', [EventsController::class, 'getEventImages']);
+    Route::get('/{event}', [EventsController::class, 'show']);
+    Route::post('/{event}/register', [EventsController::class, 'register']);
+});
+
+// Locations routes
 Route::apiResource('locations', LocationsController::class)->only(['index', 'show']);
 
-Route::get('users/me', [UsersController::class, 'me']);
-Route::post('users/qr', [UsersController::class, 'qr']);
-Route::post('users/check', [UsersController::class, 'check']);
-Route::apiResource('users', UsersController::class)->only(['index', 'show']);
+// Users routes
+Route::prefix('users')->group(function () {
+    Route::get('/me', [UsersController::class, 'me']);
+    Route::get('/{id}/qr', [UsersController::class, 'qr']);
+    Route::post('/check', [UsersController::class, 'check']);
+    Route::post('/validate_phone', [UsersController::class, 'validatePhone']);
+    Route::post('/validate_email', [UsersController::class, 'validateEmail']);
+    Route::post('/findByPhone', [UsersController::class, 'findByPhone']);
+    Route::get('/{user}', [UsersController::class, 'show']);
+    Route::post('/', [UsersController::class, 'store']);
+});
 
-Route::post('users/validate_phone', [UsersController::class, 'validatePhone']);
-Route::post('users/validate_email', [UsersController::class, 'validateEmail']);
-Route::post('users/findByPhone', [UsersController::class, 'findByPhone']);
-Route::apiResource('users', UsersController::class)->only(['store', 'show']);
-Route::post('memberships/pay', [MembershipsController::class, 'pay']);
-Route::apiResource('memberships', MembershipsController::class);
+// Memberships routes
+Route::prefix('memberships')->group(function () {
+    Route::post('/pay', [MembershipsController::class, 'pay']);
+    Route::apiResource('/', MembershipsController::class);
+});
 
+// Admin routes
 Route::prefix('admin')->name('admin.')->group(function () {
-    Route::apiResource('rules',\App\Http\Controllers\api\Admin\RulesController::class);
+    Route::apiResource('rules', \App\Http\Controllers\Api\Admin\RulesController::class);
     Route::post('upload/{type}', [\App\Http\Controllers\Api\Admin\UploadController::class, 'upload']);
     Route::apiResource('events', \App\Http\Controllers\Api\Admin\EventsController::class);
     Route::apiResource('locations', \App\Http\Controllers\Api\Admin\LocationsController::class);
     Route::apiResource('users', \App\Http\Controllers\Api\Admin\UsersController::class);
     Route::apiResource('postals', \App\Http\Controllers\Api\Admin\PostalsController::class);
-    Route::apiResource('locations', \App\Http\Controllers\Api\Admin\LocationsController::class);
     Route::apiResource('memberships', \App\Http\Controllers\Api\Admin\MembershipsController::class);
 });
 

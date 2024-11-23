@@ -1,60 +1,97 @@
 <template>
-    <h2 class="text-3xl" v-if="guardian">Guardian/Parent</h2>
-    <label class="block text-gray-700 text-sm font-bold mb-2" for="email">
-        E-mail address <span class="text-red-700">*</span>
-    </label>
-    <!-- INPUT TEXT PHONE -->
-    <input
-        class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-        id="email"
-        type="email"
-        placeholder="E-mail address"
-        v-model="this.email"
-        required
-        :class="{'border-red-700':hasErrors.email}"
-        v-on:focus="sendErrors({email: false})">
-    <span class="ml-3 mt-2 block text-red-700" v-if="hasErrors.email">{{ hasErrors.email }}</span>
-    <span class="block text-sm hover:cursor-pointer my-2 text-blue-700" @click="$emit('phone')">Can I log in with phone number instead?</span>
-    <ButtonBar :next="true" @go="next" :required="true"></ButtonBar>
+    <div>
+        <div class="mb-5">
+            <label class="block text-gray-700 text-sm font-bold mb-2" for="email">
+                E-post <span class="text-red-700">*</span>
+            </label>
+            <input
+                class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                id="email"
+                type="email"
+                placeholder="E-post"
+                v-model="email"
+                required
+                :class="{'border-red-700': hasErrors.email}"
+                @focus="sendErrors({email: false})">
+            <span class="ml-3 mt-2 block text-red-700" v-if="hasErrors.email">{{ hasErrors.email }}</span>
+        </div>
+        <ButtonBar :prev="prev" :next="true" @close="$emit('close')" @go="validateEmail" @back="back"></ButtonBar>
+    </div>
 </template>
+
 <script>
+import axios from 'axios';
 import ButtonBar from "./ButtonBar.vue";
-import axios from "axios";
 
 export default {
-    components: {ButtonBar},
+    components: { ButtonBar },
     props: {
-        hasErrors: Object,
-        prev:Array,
-        guardian: {type:Boolean, default: false,},
+        prev: {
+            type: Array,
+            required: true
+        },
+        hasErrors: {
+            type: Object,
+            required: true
+        },
+        STEPS: {
+            type: Object,
+            required: true
+        }
     },
-    emits: ['sendErrors', 'close', 'phone', 'success','back'],
     data() {
         return {
             email: null,
-            email_confirm: null,
+            errors: {}
         }
     },
     methods: {
         sendErrors(value) {
             this.$emit('sendErrors', value);
         },
-        next() {
-            if (this.email == null) this.sendErrors({email: 'Field is mandatory'});
-            if (!this.hasErrors.email) {
-                axios.post('/api/users/validate_email',{email:this.email}).then(result => {
-                    if (result.data === 0){
-                        this.sendErrors({email:"Invalid e-mail address"})
-                    }
-                     else {this.$emit('success', {email:this.email,data:result.data});}
-                }).catch(() => {
-                    this.sendErrors({email: "Something went wrong"});
+        async validateEmail() {
+            if (!this.email) {
+                this.sendErrors({email: 'E-post må fylles ut'});
+                return;
+            }
+
+            try {
+                const response = await axios.post('/api/users/validate_email', {
+                    email: this.email
                 });
+                
+                console.log('Email validation response:', response.data);
+
+                if (response.data === 0) {
+                    this.sendErrors({email: 'Ugyldig e-postadresse'});
+                    return;
+                }
+                
+                if (response.data === 1) {
+                    // Gyldig e-post, men ikke i databasen - gå til NAME (steg 5)
+                    this.$emit('success', {
+                        email: this.email
+                    }, 5);
+                    return;
+                }
+                
+                if (typeof response.data === 'object') {
+                    // E-post finnes i databasen - gå til SELECT_NAME (steg 3)
+                    this.$emit('success', {
+                        email: this.email,
+                        selection: response.data
+                    }, 3);
+                    return;
+                }
+
+            } catch (error) {
+                console.error('Email validation error:', error);
+                this.sendErrors({email: 'En feil oppstod under validering'});
             }
         },
         back(step) {
             this.$emit('back', step);
-        },
+        }
     }
 }
 </script>

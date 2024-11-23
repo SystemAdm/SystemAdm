@@ -238,20 +238,23 @@ class UsersController extends Controller
         return User::with('phones')->find($request->user()->id);
     }
 
-    public function qr(Request $request)
+    public function qr(Request $request, $id)
     {
-        $validated = $request->validate([
-            'selected' => ['nullable', 'integer']
-        ]);
-        //$u = Auth::user()->id;
-        $u = $validated['selected'];
+        $u = $id;
         $i = $u * 35;
         $w = 'SpL';
 
         $riddle = $w . $i;
-        $qrCode = base64_encode(QrCode::format('png')->size(200)->generate("$riddle"));
+        
+        // Generer QR-kode som SVG i stedet for PNG
+        $qrCode = QrCode::size(200)
+            ->style('round')
+            ->eye('circle')
+            ->color(0, 0, 0)
+            ->margin(1)
+            ->generate($riddle);
 
-        return response($qrCode)->header('Content-Type', 'image/png');
+        return response($qrCode)->header('Content-Type', 'image/svg+xml');
     }
 
     public function check(Request $request)

@@ -1,41 +1,69 @@
 <template>
-    <div class="p-6 pt-0 text-center items-center">
-        <img :src="image" alt="" class="m-auto py-5">
+    <div>
+        <div class="mb-5">
+            <label class="block text-gray-700 text-sm font-bold mb-2">
+                Din QR-kode
+            </label>
+            <div class="flex justify-center">
+                <div 
+                    v-if="user?.id"
+                    v-html="qrCode"
+                    class="max-w-xs"
+                ></div>
+                <div v-else class="text-red-600">
+                    Bruker-ID mangler
+                </div>
+            </div>
+        </div>
+        <ButtonBar :prev="prev" @close="$emit('close')" @back="back"></ButtonBar>
     </div>
-    <ButtonBar @close="$emit('close')"></ButtonBar>
 </template>
 
 <script>
-import axios from "axios";
+import axios from 'axios';
 import ButtonBar from "../ButtonBar.vue";
 
 export default {
-    emits:['close'],
-    props:{
-        selectedUser:{
-            type:Object,
+    name: 'QrCode',
+    components: { ButtonBar },
+    props: {
+        prev: {
+            type: Array,
+            required: true
+        },
+        hasErrors: {
+            type: Object,
+            required: true
+        },
+        user: {
+            type: Object,
+            required: true
         }
     },
-    components: {ButtonBar},
     data() {
         return {
-            qr: null,
-            image: '',
+            qrCode: null
         }
     },
-    methods: {
-        fetch() {
-            axios.post('/api/users/qr', {selected: this.selectedUser.id}).then(result => {
-                this.qr = result.data;
-                this.image = `data:image/png;base64,${this.qr}`;
-            })
-        },
+    async mounted() {
+        if (this.user?.id) {
+            try {
+                const response = await axios.get(`/api/users/${this.user.id}/qr`);
+                this.qrCode = response.data;
+            } catch (error) {
+                console.error('Failed to load QR code:', error);
+            }
+        }
     },
-    mounted() {
-        this.fetch();
+    emits: ['close', 'back'],
+    methods: {
+        back(step) {
+            this.$emit('back', step);
+        }
     }
-};
+}
 </script>
+
 <style scoped>
 
 </style>

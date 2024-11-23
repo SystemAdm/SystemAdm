@@ -15,7 +15,10 @@ class EventsController extends Controller
      */
     public function index()
     {
-        $events = Event::with('location')->orderBy('event_begin','desc')->get();
+        $events = Event::with('location')
+            ->orderBy('event_begin', 'desc')
+            ->get();
+        
         return response()->json($events);
     }
 

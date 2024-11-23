@@ -1,109 +1,109 @@
 <template>
     <div>
-        <h2 v-if="guardian" class="text-3xl">{{ guardianTitle }}</h2>
-        
-        <label class="block text-gray-700 text-sm font-bold mb-2" for="phone">
-            {{ $t('auth.phone_number') }} <span class="text-red-700">*</span>
-        </label>
-        
-        <input
-            id="phone"
-            type="text"
-            v-model="phone"
-            required
-            :placeholder="$t('auth.phone_placeholder')"
-            @focus="$emit('sendErrors', {phone: false})"
-            class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-            :class="{'border-red-700': hasPhoneError}"
-        >
-        
-        <span 
-            v-if="hasPhoneError"
-            class="m-5 block text-red-700" 
-        >
-            {{ hasErrors.phone }}
-        </span>
-        
-        <span 
-            class="block text-sm hover:cursor-pointer my-2 text-blue-700" 
-            @click="$emit('email')"
-        >
-            {{ $t('auth.login_with_email') }}
-        </span>
-        
-        <ButtonBar 
-            :next="true" 
-            :required="true" 
-            @go="finder" 
-            @close="$emit('close')"
-        />
+        <div class="mb-5">
+            <label class="block text-gray-700 text-sm font-bold mb-2" for="phone">
+                Telefonnummer <span class="text-red-700">*</span>
+            </label>
+            <input
+                class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                id="phone"
+                type="tel"
+                placeholder="Telefonnummer"
+                v-model="phone"
+                required
+                :class="{'border-red-700': hasErrors.phone}"
+                @focus="sendErrors({phone: false})">
+            <span class="ml-3 mt-2 block text-red-700" v-if="hasErrors.phone">{{ hasErrors.phone }}</span>
+            
+            <!-- Bare én knapp for å gå til e-post -->
+            <button 
+                @click="skipPhone"
+                class="mt-4 text-sm text-blue-600 hover:text-blue-800"
+            >
+                Jeg har ikke telefonnummer
+            </button>
+        </div>
+        <ButtonBar :prev="prev" :next="true" @close="$emit('close')" @go="validatePhone" @back="back"></ButtonBar>
     </div>
 </template>
-<script setup>
+
+<script>
+import axios from 'axios';
 import ButtonBar from "./ButtonBar.vue";
-import { ref, computed } from 'vue';
-import axios from "axios";
 
-const props = defineProps({
-    hasErrors: {
-        type: Object,
-        required: true
+export default {
+    components: { ButtonBar },
+    props: {
+        prev: {
+            type: Array,
+            required: true
+        },
+        hasErrors: {
+            type: Object,
+            required: true
+        },
+        STEPS: {
+            type: Object,
+            required: true
+        }
     },
-    prev: {
-        type: Array,
-        default: () => []
+    data() {
+        return {
+            phone: null,
+            errors: {}
+        }
     },
-    guardian: {
-        type: Boolean,
-        default: false
-    }
-});
+    methods: {
+        sendErrors(value) {
+            this.$emit('sendErrors', value);
+        },
+        skipPhone() {
+            // Gå direkte til e-post-steget
+            this.$emit('success', {
+                phone: null
+            }, 2);
+        },
+        async validatePhone() {
+            if (!this.phone) {
+                this.sendErrors({phone: 'Telefonnummer må fylles ut'});
+                return;
+            }
 
-const emit = defineEmits(['sendErrors', 'success', 'close', 'email', 'back']);
+            try {
+                const response = await axios.post('/api/users/validate_phone', {
+                    phone: this.phone
+                });
+                
+                console.log('Phone validation response:', response.data);
 
-const phone = ref(null);
+                if (response.data === 0) {
+                    this.sendErrors({phone: 'Ugyldig telefonnummer'});
+                    return;
+                }
+                
+                if (response.data === 1) {
+                    this.$emit('success', {
+                        phone: this.phone
+                    }, 5);
+                    return;
+                }
+                
+                if (typeof response.data === 'object') {
+                    this.$emit('success', {
+                        phone: this.phone,
+                        selection: response.data
+                    }, 3);
+                    return;
+                }
 
-// Computed properties
-const hasPhoneError = computed(() => props.hasErrors.phone);
-const guardianTitle = computed(() => props.guardian ? window.i18n.t('auth.guardian_parent') : '');
-
-// Methods
-const clearPhoneError = () => emit('sendErrors', { phone: false });
-
-const validatePhone = async () => {
-    if (!phone.value) {
-        emit('sendErrors', { phone: window.i18n.t('auth.field_required') });
-        return false;
-    }
-    return true;
-};
-
-const handleEmailClick = () => emit('email');
-const handleClose = () => emit('close');
-
-const finder = async () => {
-    if (await validatePhone()) {
-        try {
-            const response = await axios.post('/api/users/validate_phone', { 
-                phone: phone.value 
-            });
-            
-            handleResponse(response.data);
-        } catch (error) {
-            console.error('API Error:', error);
-            emit('sendErrors', { phone: window.i18n.t('auth.validation_error') });
+            } catch (error) {
+                console.error('Phone validation error:', error);
+                this.sendErrors({phone: 'En feil oppstod under validering'});
+            }
+        },
+        back(step) {
+            this.$emit('back', step);
         }
     }
-};
-
-const handleResponse = (data) => {
-    if (data === 0) {
-        emit('sendErrors', { phone: window.i18n.t('auth.invalid_phone') });
-    } else {
-        emit('success', { 
-            data: data === 1 ? 1 : data, 
-            phone: phone.value 
-        });
-    }
-};
+}
 </script>

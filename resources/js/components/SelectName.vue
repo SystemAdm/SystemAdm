@@ -1,117 +1,60 @@
 <template>
     <div>
-        <h2 v-if="guardian" class="text-3xl">{{ title }}</h2>
-        
-        <label for="name" class="block">
-            {{ t('auth.found_registration') }}<br/>
-            <span class="font-bold" :class="{'text-red-500 text-xl': hasErrors.select_name}">
-                {{ t('auth.select_user') }}
-            </span>
-        </label>
-
-        <!-- Brukervalg -->
-        <div class="flex justify-center" v-for="name in selection" :key="name.id">
-            <div class="text-gray-500 font-bold flex" @click="selectName(name.id)">
-                <input 
-                    type="radio" 
-                    class="hidden" 
-                    id="name" 
-                    v-model="selected_name" 
-                    :value="name.id" 
-                    required
-                >
-                <div 
-                    class="border-4 p-1 transition-all duration-300 justify-center"
-                    :class="[isSelected(name) ? 'border-blue-500' : 'border-transparent']"
-                >
-                    <img 
-                        :src="name.profile.image" 
-                        :alt="t('auth.user_avatar')" 
-                        class="w-12 h-12 rounded-full object-cover m-auto"
-                    >
-                    <span class="text-sm">
-                        <font-awesome-icon 
-                            v-if="name.active" 
-                            class="text-orange-500" 
-                            :icon="['fas','lock']"
-                        />&nbsp;{{ name.given_name }}
-                    </span>
-                </div>
-            </div>
-        </div>
-
-        <!-- "Noen andre" valget -->
-        <div class="justify-self-start mb-5">
-            <label class="text-black font-bold">
-                <input 
-                    @select="sendErrors({select_name:false})" 
-                    class="mr-2 leading-tight" 
-                    type="radio" 
-                    name="restriction"
-                    id="attending_crew" 
-                    v-model="selected_name" 
-                    :value="0"
-                >
-                <span class="text-xl">{{ t('auth.someone_else') }}</span>
+        <div class="mb-5">
+            <label class="block text-gray-700 text-sm font-bold mb-2">
+                Velg bruker eller opprett ny
             </label>
+            <div v-for="(user, id) in selection" :key="id" class="mb-2">
+                <button 
+                    @click="selectUser(user)"
+                    class="w-full text-left p-3 border rounded hover:bg-gray-100"
+                >
+                    {{ user.display_name }}
+                </button>
+            </div>
+            <button 
+                @click="notMe"
+                class="w-full text-left p-3 border rounded hover:bg-gray-100 mt-4 text-blue-600"
+            >
+                Ikke meg - opprett ny bruker
+            </button>
         </div>
-
-        <ButtonBar 
-            :next="true" 
-            :prev="prev" 
-            @back="back" 
-            @go="go" 
-            @close="$emit('close')"
-        />
+        <ButtonBar :prev="prev" @close="$emit('close')" @back="back"></ButtonBar>
     </div>
 </template>
+
 <script>
 import ButtonBar from "./ButtonBar.vue";
-import { FontAwesomeIcon } from "@fortawesome/vue-fontawesome";
 
 export default {
-    name: 'SelectName',
-    components: { 
-        FontAwesomeIcon, 
-        ButtonBar 
-    },
-    
-    setup() {
-        const { t } = useI18n();
-        return { t };
-    },
-    
-    emits: ['success', 'sendErrors', 'close', 'back'],
+    components: { ButtonBar },
     props: {
-        prev: Array,
-        selection: Object,
-        hasErrors: Object,
-        selected: Object,
-        guardian: {type:Boolean, default: false,},
-    },
-    data() {
-        return {
-            selected_name: null,
+        selection: {
+            type: Object,
+            required: true
+        },
+        prev: {
+            type: Array,
+            required: true
+        },
+        hasErrors: {
+            type: Object,
+            required: true
         }
     },
     methods: {
-        go() {
-            if (this.selected_name === null) {
-                this.sendErrors({select_error: true});
-            } else {
-                this.$emit('success', (this.selected_name !== 0) ? this.selection[this.selected_name] : 0);
-            }
+        selectUser(user) {
+            // Valgt eksisterende bruker - gå til passordsjekk
+            this.$emit('success', {
+                selected: user
+            }, 4);
         },
-        sendErrors(value) {
-            this.$emit('sendErrors', value);
+        notMe() {
+            // "Ikke meg" - gå til NAME (steg 5)
+            this.$emit('success', {}, 5);
         },
         back(step) {
             this.$emit('back', step);
-        }
-    },
-    computed: {
-        title() {
-            return this.guardian ? this.t('auth.guardian_parent') : this.t('auth.among_us');
         }
     }
 }

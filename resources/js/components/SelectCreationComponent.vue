@@ -1,42 +1,75 @@
 <template>
-    <div class="flex justify-center columns-3">
-        <div class="font-bold flex items-center w-1/3 px-2" @click="$emit('viewQr')">
-            <div class="justify-items-center text-black">
-                <font-awesome-icon class="size-20" :icon="['fas', 'qrcode']"/>
-                <div class="text-sm ">Show my QR code</div>
+    <div>
+        <div class="mb-5">
+            <label class="block text-gray-700 text-sm font-bold mb-2">
+                Hva ønsker du å gjøre?
+            </label>
+            <div class="space-y-3">
+                <button 
+                    @click="selectOption('qr')"
+                    class="w-full text-left p-3 border rounded hover:bg-gray-100"
+                >
+                    Vis min QR-kode
+                </button>
+                <button 
+                    @click="selectOption('create_child')"
+                    class="w-full text-left p-3 border rounded hover:bg-gray-100"
+                >
+                    Registrere barn
+                </button>
+                <button 
+                    @click="selectOption('create_guardian')"
+                    class="w-full text-left p-3 border rounded hover:bg-gray-100"
+                >
+                    Registrere foresatt
+                </button>
             </div>
         </div>
-        <div class="font-bold flex items-center w-1/3 px-2" @click="$emit('register')">
-            <div class="justify-items-center text-black">
-                <font-awesome-icon class="size-20" :icon="['fas', 'id-card']"/>
-                <div class="text-sm ">Guest/User account</div>
-            </div>
-        </div>
-        <div class="font-bold flex items-center w-1/3 px-2" v-if="age >= 18" @click="$emit('guardian')">
-            <div class="justify-items-center text-black">
-                <font-awesome-icon class="size-20" :icon="['fas', 'people-pulling']"/>
-                <div class="text-sm ">Parent/Guardian account</div>
-            </div>
-        </div>
+        <ButtonBar :prev="prev" @close="$emit('close')" @back="back"></ButtonBar>
     </div>
-    <ButtonBar :prev="prev" @back="back" @close="$emit('close')"></ButtonBar>
 </template>
 <script>
 import ButtonBar from "./ButtonBar.vue";
 
 export default {
-    props:{
-        age:Number,
-        prev:Array,
-    },
-    components: {ButtonBar},
-    emits: ['viewQr', 'register', 'close', 'guardian','back'],
-    data() {
-        return {
-            option: null,
+    components: { ButtonBar },
+    props: {
+        prev: {
+            type: Array,
+            required: true
+        },
+        hasErrors: {
+            type: Object,
+            required: true
+        },
+        STEPS: {
+            type: Object,
+            required: true
         }
     },
+    emits: ['sendErrors', 'close', 'back', 'success'],
     methods: {
+        selectOption(option) {
+            let nextStep;
+            
+            switch(option) {
+                case 'qr':
+                    nextStep = this.STEPS.QR; // Steg 20
+                    break;
+                case 'create_child':
+                    nextStep = this.STEPS.CHILD_PHONE; // Steg for å registrere barn
+                    break;
+                case 'create_guardian':
+                    nextStep = this.STEPS.GUARDIAN_PHONE; // Steg for å registrere foresatt
+                    break;
+            }
+            
+            this.$emit('success', { 
+                option: option,
+                type: option === 'create_child' ? 'child' : 
+                      option === 'create_guardian' ? 'guardian' : 'user'
+            }, nextStep);
+        },
         back(step) {
             this.$emit('back', step);
         }

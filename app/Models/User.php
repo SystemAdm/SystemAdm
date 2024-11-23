@@ -14,6 +14,7 @@ use Laravel\Cashier\Billable;
 use LaravelAndVueJS\Traits\LaravelPermissionToVueJS;
 use Spatie\Permission\Traits\HasPermissions;
 use Spatie\Permission\Traits\HasRoles;
+use Illuminate\Database\Eloquent\Casts\Attribute;
 
 class User extends Authenticatable
 {
@@ -207,5 +208,4 @@ class User extends Authenticatable
         return $this->roles()->orderBy('rank')->first() ?? null;
     }
 
-    
 }
