@@ -1,77 +1,127 @@
 <template>
-    <h2 class="text-3xl" v-if="guardian">Guardian/Parent</h2>
-    <label class="block text-gray-700 text-sm font-bold mb-2" for="email">
-        E-mail address <span class="text-red-700">*</span>
-        <span class="block text-gray-400 text-sm">We will only send you critical, but insensitive information. Ex. reset password</span>
-    </label>
-    <!-- INPUT TEXT PHONE -->
-    <input
-        class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-        id="email"
-        type="email"
-        placeholder="E-mail address"
-        v-model="this.email"
-        required
-        :class="{'border-red-700':hasErrors.email}"
-        v-on:focus="sendErrors({email: false})">
-    <span class="ml-3 mt-2 block text-red-700" v-if="hasErrors.email">{{ hasErrors.email }}</span>
-    <label class="block text-gray-700 text-sm font-bold mb-2 mt-5" for="email_confirm">
-        E-mail address confirmation<span class="text-red-700">*</span>
-        <span
-            class="block text-gray-400 text-sm">Please confirm you e-mail address by retyping it</span>
-    </label>
-    <!-- INPUT TEXT PHONE -->
-    <input
-        class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-        id="email_confirm"
-        type="email"
-        placeholder="E-mail address confirmation"
-        v-model="this.email_confirm"
-        required
-        :class="{'border-red-700':hasErrors.email_confirm}"
-        v-on:focus="sendErrors({email_confirm: false})">
-    <span class="ml-3 mt-2 block text-red-700" v-if="hasErrors.email_confirm">{{
-            hasErrors.email_confirm
-        }}</span>
-    <span class="block text-sm hover:cursor-pointer my-2 text-blue-700" @click="$emit('phone')">Can I log in with phone number instead?</span>
-    <ButtonBar :next="true" @go="next" :required="true"></ButtonBar>
-</template>
-<script>
-import ButtonBar from "./ButtonBar.vue";
-import axios from "axios";
+    <div class="max-w-2xl mx-auto">
+        <h2 v-if="guardian" class="text-3xl mb-6">{{ $t('common.guardian_parent') }}</h2>
+        
+        <EmailInput
+            id="email"
+            v-model="email"
+            :error="hasErrors.email"
+            label-key="common.email"
+            info-key="common.email_usage_info"
+            placeholder-key="common.email_placeholder"
+            @clear-error="clearError('email')"
+        />
 
-export default {
-    components: {ButtonBar},
-    props: {
-        hasErrors: Object,
-        prev:Array,
-        guardian: {type:Boolean, default: false,},
+        <EmailInput
+            id="email_confirm"
+            v-model="emailConfirm"
+            :error="hasErrors.email_confirm"
+            label-key="common.email_confirm"
+            info-key="common.email_confirm_info"
+            placeholder-key="common.email_confirm_placeholder"
+            @clear-error="clearError('email_confirm')"
+        />
+
+        <div class="mb-5">
+            <span 
+                class="block text-sm hover:cursor-pointer text-blue-700"
+                @click="handlePhoneClick"
+            >
+                {{ $t('common.login_with_phone') }}
+            </span>
+        </div>
+
+        <ButtonBar 
+            :prev="prev"
+            :next="true"
+            :current-step="currentStep"
+            @go="validateEmail"
+            @back="handleBack"
+        />
+    </div>
+</template>
+
+<script setup>
+import { ref } from 'vue';
+import { trans } from 'laravel-vue-i18n'
+import axios from 'axios';
+import ButtonBar from './ButtonBar.vue';
+import EmailInput from './fields/EmailInput.vue';
+
+const props = defineProps({
+    hasErrors: {
+        type: Object,
+        required: true
     },
-    emits: ['sendErrors', 'close', 'phone', 'success'],
-    data() {
-        return {
-            email: null,
-            email_confirm: null,
-        }
+    prev: {
+        type: Array,
+        required: true
     },
-    methods: {
-        sendErrors(value) {
-            this.$emit('sendErrors', value);
-        },
-        next() {
-            if (this.email == null) this.sendErrors({email: 'Field is mandatory'});
-            if (this.email_confirm == null) this.sendErrors({email_confirm: 'Field is mandatory'});
-            if (!this.hasErrors.email && !this.hasErrors.email_confirm) {
-                axios.post('/api/users/verify_email').then(result => {
-                    this.$emit('success', result.data);
-                }).catch(() => {
-                    this.sendErrors({email: "Something went wrong"});
-                });
-            }
-        },
-        back(step) {
-            this.$emit('back', step);
-        },
+    guardian: {
+        type: Boolean,
+        default: false
+    },
+    currentStep: {
+        type: Number,
+        required: true
     }
-}
+});
+
+const emit = defineEmits(['sendErrors', 'phone', 'success', 'back']);
+
+const email = ref('');
+const emailConfirm = ref('');
+
+const clearError = (field) => {
+    emit('sendErrors', { [field]: false });
+};
+
+const handlePhoneClick = () => {
+    emit('phone');
+};
+
+const handleBack = () => {
+    emit('back');
+};
+
+const validateEmail = async () => {
+    // Reset errors
+    emit('sendErrors', { email: false, email_confirm: false });
+
+    // Validate required fields
+    if (!email.value) {
+        emit('sendErrors', { email: trans('validation.required', { field: trans('common.email') }) });
+        return;
+    }
+    if (!emailConfirm.value) {
+        emit('sendErrors', { email_confirm: trans('validation.required', { field: trans ('common.email_confirm') }) });
+        return;
+    }
+
+    // Validate email format
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email.value)) {
+        emit('sendErrors', { email: trans('validation.email') });
+        return;
+    }
+
+    // Validate matching emails
+    if (email.value !== emailConfirm.value) {
+        emit('sendErrors', { email_confirm: trans('validation.email_mismatch') });
+        return;
+    }
+
+    try {
+        const response = await axios.post('/api/users/verify_email', {
+            email: email.value
+        });
+        emit('success', { email: email.value });
+    } catch (error) {
+        if (error.response?.status === 422) {
+            emit('sendErrors', { email: error.response.data.message });
+        } else {
+            emit('sendErrors', { email: trans('errors.something_went_wrong') });
+        }
+    }
+};
 </script>

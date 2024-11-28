@@ -1,97 +1,104 @@
 <template>
     <div>
-        <div class="mb-5">
-            <label class="block text-gray-700 text-sm font-bold mb-2" for="email">
-                E-post <span class="text-red-700">*</span>
-            </label>
-            <input
-                class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-                id="email"
-                type="email"
-                placeholder="E-post"
-                v-model="email"
-                required
-                :class="{'border-red-700': hasErrors.email}"
-                @focus="sendErrors({email: false})">
-            <span class="ml-3 mt-2 block text-red-700" v-if="hasErrors.email">{{ hasErrors.email }}</span>
-        </div>
-        <ButtonBar :prev="prev" :next="true" @close="$emit('close')" @go="validateEmail" @back="back"></ButtonBar>
+        <EmailInput
+            id="email"
+            v-model="email"
+            :error="hasErrors.email"
+            label-key="common.email"
+            placeholder-key="common.email_placeholder"
+            required
+            @clear-error="clearEmailError"
+        />
+        
+        <ButtonBar 
+            :current-step="currentStep" 
+            :prev="prev" 
+            :next="true" 
+            @close="handleClose" 
+            @go="validateEmail" 
+            @back="handleBack"
+        />
     </div>
 </template>
 
-<script>
+<script setup>
+import { ref } from 'vue';
+import { trans } from 'laravel-vue-i18n'
 import axios from 'axios';
 import ButtonBar from "./ButtonBar.vue";
+import EmailInput from "./fields/EmailInput.vue";
 
-export default {
-    components: { ButtonBar },
-    props: {
-        prev: {
-            type: Array,
-            required: true
-        },
-        hasErrors: {
-            type: Object,
-            required: true
-        },
-        STEPS: {
-            type: Object,
-            required: true
-        }
+const props = defineProps({
+    prev: {
+        type: Array,
+        required: true
     },
-    data() {
-        return {
-            email: null,
-            errors: {}
-        }
+    hasErrors: {
+        type: Object,
+        required: true
     },
-    methods: {
-        sendErrors(value) {
-            this.$emit('sendErrors', value);
-        },
-        async validateEmail() {
-            if (!this.email) {
-                this.sendErrors({email: 'E-post må fylles ut'});
-                return;
-            }
-
-            try {
-                const response = await axios.post('/api/users/validate_email', {
-                    email: this.email
-                });
-                
-                console.log('Email validation response:', response.data);
-
-                if (response.data === 0) {
-                    this.sendErrors({email: 'Ugyldig e-postadresse'});
-                    return;
-                }
-                
-                if (response.data === 1) {
-                    // Gyldig e-post, men ikke i databasen - gå til NAME (steg 5)
-                    this.$emit('success', {
-                        email: this.email
-                    }, 5);
-                    return;
-                }
-                
-                if (typeof response.data === 'object') {
-                    // E-post finnes i databasen - gå til SELECT_NAME (steg 3)
-                    this.$emit('success', {
-                        email: this.email,
-                        selection: response.data
-                    }, 3);
-                    return;
-                }
-
-            } catch (error) {
-                console.error('Email validation error:', error);
-                this.sendErrors({email: 'En feil oppstod under validering'});
-            }
-        },
-        back(step) {
-            this.$emit('back', step);
-        }
+    STEPS: {
+        type: Object,
+        required: true
+    },
+    currentStep: {
+        type: Number,
+        required: true
     }
-}
+});
+
+const emit = defineEmits(['sendErrors', 'success', 'close', 'back']);
+
+const email = ref(null);
+
+const clearEmailError = () => {
+    emit('sendErrors', { email: false });
+};
+
+const handleClose = () => {
+    emit('close');
+};
+
+const handleBack = (step) => {
+    emit('back', step);
+};
+
+const validateEmail = async () => {
+    if (!email.value) {
+        emit('sendErrors', { email: trans('validation.email_required') });
+        return;
+    }
+
+    try {
+        const response = await axios.post('/api/users/validate_email', {
+            email: email.value
+        });
+
+        if (response.data === 0) {
+            emit('sendErrors', { email: trans('validation.email_invalid') });
+            return;
+        }
+        
+        if (response.data === 1) {
+            // Valid email, not in database - go to NAME (step 5)
+            emit('success', {
+                email: email.value
+            }, 5);
+            return;
+        }
+        
+        if (typeof response.data === 'object') {
+            // Email exists in database - go to SELECT_NAME (step 3)
+            emit('success', {
+                email: email.value,
+                selection: response.data
+            }, 3);
+            return;
+        }
+
+    } catch (error) {
+        console.error('Email validation error:', error);
+        emit('sendErrors', { email: trans('errors.validation_failed') });
+    }
+};
 </script>

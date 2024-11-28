@@ -1,105 +1,158 @@
 <template>
     <div v-show="required" class="block text-black m-3 text-sm">
-        All fields marked with <span class="text-red-700">*</span> is required
+        {{ $t('common.required_fields') }} <span class="text-red-700">*</span>
     </div>
     <div class="flex flex-wrap justify-center gap-2">
         <button
+            v-for="(btn, key) in buttons"
+            :key="key"
+            v-show="btn.show"
             type="button"
-            v-if="prev && prev.length > 0 && !trashed"
-            @click="$emit('back', previous)"
-            class="py-2 px-3 text-white bg-yellow-600 hover:bg-yellow-800 focus:ring-4 focus:ring-yellow-300 font-medium rounded-lg text-base inline-flex items-center text-center"
+            :class="[
+                btn.class,
+                disabled && (key === 'next' || key === 'submit') ? 'opacity-50 cursor-not-allowed' : ''
+            ]"
+            :disabled="disabled && (key === 'next' || key === 'submit')"
+            @click="btn.action"
         >
-            <font-awesome-icon :icon="['fas', 'arrow-left']" class="mr-2" />
-            Prev
-        </button>
-        <button
-            type="button"
-            @click="$emit('close')"
-            class="py-2 px-3 text-white bg-red-600 hover:bg-red-800 focus:ring-4 focus:ring-red-300 font-medium rounded-lg text-base inline-flex items-center text-center"
-        >
-            <font-awesome-icon :icon="['fas', 'xmark']" class="mr-2" />
-            Close
-        </button>
-        <button
-            type="button"
-            v-if="next && !trashed"
-            @click="$emit('go')"
-            class="py-2 px-3 text-white bg-blue-600 hover:bg-blue-800 focus:ring-4 focus:ring-blue-300 font-medium rounded-lg text-base inline-flex items-center text-center"
-        >
-            Next
-            <font-awesome-icon :icon="['fas', 'arrow-right']" class="pl-2" />
-        </button>
-        <button
-            type="button"
-            v-else-if="submit && !trashed"
-            @click="$emit('go')"
-            class="py-2 px-3 text-white bg-green-600 hover:bg-green-800 focus:ring-4 focus:ring-green-300 font-medium rounded-lg text-base inline-flex items-center text-center"
-        >
-            Submit
-            <font-awesome-icon :icon="['fas', 'arrow-right']" class="pl-2" />
-        </button>
-        <button
-            type="button"
-            v-if="canDelete && !trashed"
-            @click="$emit('delete')"
-            class="py-2 px-3 text-white bg-red-600 hover:bg-red-700 focus:ring-4 focus:ring-red-300 font-medium rounded-lg text-base inline-flex items-center text-center"
-        >
-            <font-awesome-icon :icon="['fas', 'trash-can']" class="pr-2" />
-            Delete
-        </button>
-        <button
-            type="button"
-            v-if="trashed"
-            @click="$emit('force')"
-            class="py-2 px-3 text-white bg-red-600 hover:bg-red-700 focus:ring-4 focus:ring-red-300 font-medium rounded-lg text-base inline-flex items-center text-center"
-        >
-            <font-awesome-icon :icon="['fas', 'trash-can']" class="pr-2" />
-            Force Delete
-        </button>
-        <button
-            type="button"
-            v-if="trashed"
-            @click="$emit('restore')"
-            class="py-2 px-3 text-white bg-orange-600 hover:bg-orange-700 focus:ring-4 focus:ring-orange-300 font-medium rounded-lg text-base inline-flex items-center text-center"
-        >
-            <font-awesome-icon :icon="['fas', 'trash-can-arrow-up']" class="pr-2" />
-            Restore
+            <font-awesome-icon 
+                v-if="btn.icon && btn.iconPosition === 'left'" 
+                :icon="btn.icon" 
+                :class="btn.iconClass"
+            />
+            {{ $t(btn.text) }}
+            <font-awesome-icon 
+                v-if="btn.icon && btn.iconPosition === 'right'" 
+                :icon="btn.icon" 
+                :class="btn.iconClass"
+            />
         </button>
     </div>
 </template>
-<script>
-export default {
-    props: {
-        next: {
-            type: Boolean,
-            default: false
-        },
-        prev: {
-            type: Array,
-            default: () => []
-        },
-        required: {
-            type: Boolean,
-            default: false
-        },
-        submit: {
-            type: Boolean,
-            default: false
-        },
-        canDelete: { // Updated naming
-            type: Boolean,
-            default: false
-        },
-        trashed: {
-            type: Boolean,
-            default: false
+
+<script setup>
+import { computed } from 'vue';
+import { useRouter } from 'vue-router';
+
+const router = useRouter();
+
+const props = defineProps({
+    next: Boolean,
+    prev: {
+        type: Array,
+        default: () => []
+    },
+    currentStep: {
+        type: Number,
+        default: 1
+    },
+    required: Boolean,
+    submit: Boolean,
+    canDelete: Boolean,
+    trashed: Boolean,
+    loading: {
+        type: Boolean,
+        default: false
+    },
+    disabled: {
+        type: Boolean,
+        default: false
+    }
+});
+
+const emit = defineEmits(['go', 'close', 'back', 'delete', 'force', 'restore', 'reset']);
+
+const baseButtonClass = `
+    py-2 px-3 text-white font-medium rounded-lg text-base 
+    inline-flex items-center text-center focus:ring-4
+`;
+
+const handleReset = () => {
+    if (props.currentStep === 1 || props.currentStep === 2) {
+        router.push({ name: 'Index' });
+    } else {
+        emit('reset');
+        emit('back', 1);
+    }
+};
+
+const handleClose = () => {
+    if (props.currentStep === 1 || props.currentStep === 2) {
+        router.push({ name: 'Index' });
+    }
+};
+
+const buttons = computed(() => ({
+    back: {
+        show: props.prev?.length > 0,
+        icon: ['fas', 'arrow-left'],
+        iconClass: 'mr-2',
+        iconPosition: 'left',
+        text: 'common.back',
+        class: `${baseButtonClass} bg-gray-600 hover:bg-gray-800 focus:ring-gray-300`,
+        action: () => {
+            emit('back', props.prev[props.prev.length - 1]);
         }
     },
-    computed: {
-        previous() {
-            return Array.isArray(this.prev) && this.prev.length > 0 ? this.prev[this.prev.length - 1] : null;
-        }
+    startOver: {
+        show: props.currentStep >= 3,
+        icon: ['fas', 'rotate-left'],
+        iconClass: 'mr-2',
+        iconPosition: 'left',
+        text: 'common.start_over',
+        class: `${baseButtonClass} bg-red-600 hover:bg-red-800 focus:ring-red-300`,
+        action: handleReset
     },
-    emits: ['go', 'close', 'back', 'delete', 'force', 'restore']
-}
+    close: {
+        show: props.prev?.length === 0,
+        icon: ['fas', 'xmark'],
+        iconClass: 'mr-2',
+        iconPosition: 'left',
+        text: 'common.close',
+        class: `${baseButtonClass} bg-red-600 hover:bg-red-800 focus:ring-red-300`,
+        action: handleClose
+    },
+    next: {
+        show: props.next && !props.trashed,
+        icon: ['fas', 'arrow-right'],
+        iconClass: 'ml-2',
+        iconPosition: 'right',
+        text: 'common.next',
+        class: `${baseButtonClass} bg-blue-600 hover:bg-blue-800 focus:ring-blue-300`,
+        action: () => emit('go')
+    },
+    submit: {
+        show: props.submit && !props.trashed,
+        icon: ['fas', 'arrow-right'],
+        iconClass: 'ml-2',
+        iconPosition: 'right',
+        text: 'common.submit',
+        class: `${baseButtonClass} bg-green-600 hover:bg-green-800 focus:ring-green-300`,
+        action: () => emit('go')
+    },
+    delete: {
+        show: props.canDelete && !props.trashed,
+        icon: ['fas', 'trash-can'],
+        iconClass: 'pr-2',
+        text: 'common.delete',
+        class: `${baseButtonClass} bg-red-600 hover:bg-red-700 focus:ring-red-300`,
+        action: () => emit('delete')
+    },
+    forceDelete: {
+        show: props.trashed,
+        icon: ['fas', 'trash-can'],
+        iconClass: 'pr-2',
+        text: 'common.force_delete',
+        class: `${baseButtonClass} bg-red-600 hover:bg-red-700 focus:ring-red-300`,
+        action: () => emit('force')
+    },
+    restore: {
+        show: props.trashed,
+        icon: ['fas', 'trash-can-arrow-up'],
+        iconClass: 'pr-2',
+        text: 'common.restore',
+        class: `${baseButtonClass} bg-orange-600 hover:bg-orange-700 focus:ring-orange-300`,
+        action: () => emit('restore')
+    }
+}));
 </script>

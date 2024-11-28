@@ -10,10 +10,10 @@
         id="password"
         type="password"
         placeholder="Password"
-        v-model="this.password"
+        v-model="password"
         required
         :class="{'border-red-700':errors.password}"
-        v-on:focus="errors.password = false">
+        @focus="errors.password = false">
     <span class="ml-3 mt-2 block text-red-700" v-if="errors.password">{{ errors.password }}</span>
     <label class="block text-gray-700 text-sm font-bold mb-2 mt-5" for="password_confirm">
         Password confirmation<span class="text-red-700">*</span>
@@ -26,40 +26,54 @@
         id="password_confirmed"
         type="password"
         placeholder="Password confirmation"
-        v-model="this.password_confirmed"
+        v-model="password_confirmed"
         required
         :class="{'border-red-700':errors.password_confirmed}"
-        v-on:focus="errors.password_confirmed = false">
+        @focus="errors.password_confirmed = false">
     <span class="ml-3 mt-2 block text-red-700" v-if="errors.password_confirmed">{{
             errors.password_confirm
         }}</span>
-    <ButtonBar :next="true" @close="$emit('close')" @go="check" @back="back"></ButtonBar>
+    <ButtonBar :current-step="currentStep" :next="true" @close="emit('close')" @go="check" @back="emit('back')"></ButtonBar>
 </template>
-<script>
+<script setup>
 import ButtonBar from "./ButtonBar.vue";
+import { ref } from 'vue';
 
-export default {
-    components: {ButtonBar},
-    props:{
-        errors:Object,
+const props = defineProps({
+    errors: {
+        type: Object,
+        required: true
     },
-    emits:['sendErrors','close','back','next'],
-    data(){
-        return{
-            password:null,
-            password_confirmed:null,
-        }
-    },
-    methods:{
-        sendErrors(value){
-            this.$emit('sendErrors',value);
-        },
-        go(){
-
-        },
-        back(){
-
-        }
+    currentStep: {
+        type: Number,
+        required: true
     }
-}
+});
+
+const emit = defineEmits(['sendErrors', 'close', 'back', 'next']);
+
+const password = ref(null);
+const password_confirmed = ref(null);
+
+const check = () => {
+    if (!password.value || !password_confirmed.value) {
+        emit('sendErrors', {
+            password: !password.value ? 'Password is required' : false,
+            password_confirmed: !password_confirmed.value ? 'Password confirmation is required' : false
+        });
+        return;
+    }
+
+    if (password.value !== password_confirmed.value) {
+        emit('sendErrors', {
+            password_confirmed: 'Passwords do not match'
+        });
+        return;
+    }
+
+    emit('next', {
+        password: password.value,
+        password_confirmed: password_confirmed.value
+    });
+};
 </script>

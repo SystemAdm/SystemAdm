@@ -10,7 +10,7 @@ use Illuminate\Support\Facades\Auth;
 
 // Auth routes
 Route::middleware('auth:sanctum')->group(function () {
-    Route::get('/user', fn (Request $request) => $request->user());
+    Route::get('/user', [UsersController::class, 'user']);
     Route::post('/logout', [UsersController::class, 'logout']);
 });
 
@@ -29,10 +29,13 @@ Route::prefix('events')->group(function () {
 // Locations routes
 Route::apiResource('locations', LocationsController::class)->only(['index', 'show']);
 
-// Users routes
+// Users routes || not logged in
 Route::prefix('users')->group(function () {
-    Route::get('/me', [UsersController::class, 'me']);
-    Route::get('/{id}/qr', [UsersController::class, 'qr']);
+    Route::middleware('auth:sanctum')->group(function () {
+        Route::get('/me', [UsersController::class, 'me']);
+        Route::get('/{id}/qr', [UsersController::class, 'qr']);
+    });
+    Route::post('/login', [UsersController::class, 'login']);
     Route::post('/check', [UsersController::class, 'check']);
     Route::post('/validate_phone', [UsersController::class, 'validatePhone']);
     Route::post('/validate_email', [UsersController::class, 'validateEmail']);
@@ -48,7 +51,7 @@ Route::prefix('memberships')->group(function () {
 });
 
 // Admin routes
-Route::prefix('admin')->name('admin.')->group(function () {
+Route::prefix('admin')->name('admin.')->middleware('auth:sanctum')->group(function () {
     Route::apiResource('rules', \App\Http\Controllers\Api\Admin\RulesController::class);
     Route::post('upload/{type}', [\App\Http\Controllers\Api\Admin\UploadController::class, 'upload']);
     Route::apiResource('events', \App\Http\Controllers\Api\Admin\EventsController::class);

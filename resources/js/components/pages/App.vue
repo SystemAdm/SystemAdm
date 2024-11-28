@@ -1,13 +1,12 @@
 <!-- App.vue -->
 <template>
     <div class="w-full">
-        <Navbar :user="user" @logout="logout"/>
+        <Navbar :user="user" @handle-logout="handleLogout" />
         <div class="py-5">
-            <router-view :me="user"/> <!-- Displays routed components -->
+            <router-view :me="user"/>
         </div>
 
-        <!-- Notification Groups -->
-        <NotificationGroup v-for="type in ['error', 'generic', 'success']" :key="type" :group="type">
+        <NotificationGroup v-for="type in notificationTypes" :key="type" :group="type">
             <div class="fixed inset-0 flex items-start justify-end p-6 px-4 py-6 pointer-events-none">
                 <div class="w-full max-w-sm">
                     <Notification
@@ -47,109 +46,113 @@
     </div>
 </template>
 
-<script>
+<script setup>
+import { ref, onMounted, watch, provide } from 'vue';
 import axios from "axios";
 import Navbar from '../Navbar.vue';
-import {Notification, NotificationGroup} from "notiwind";
+import { Notification, NotificationGroup } from "notiwind";
+import { useRouter } from 'vue-router';
+import { notify } from '../utils/notify';
 
-export default {
-    setup() {
-        console.log(localStorage.getItem('user'))
-    },
-    components: {
-        Notification,
-        NotificationGroup,
-        Navbar,
-    },
-    data() {
-        return {
-            user: null,
-            loading: false, // Optional loading indicator
-            bgColorClass: {
-                error: 'bg-red-500',
-                generic: 'bg-blue-500',
-                success: 'bg-green-500'
-            },
-            textColorClass: {
-                error: 'text-red-500',
-                generic: 'text-blue-500',
-                success: 'text-blue-500'
-            },
-            iconPath: {
-                error: 'M20 3.33331C10.8 3.33331 3.33337 10.8 3.33337 20C3.33337 29.2 10.8 36.6666 20 36.6666C29.2 36.6666 36.6667 29.2 36.6667 20C36.6667 10.8 29.2 3.33331 20 3.33331ZM21.6667 28.3333H18.3334V25H21.6667V28.3333ZM21.6667 21.6666H18.3334V11.6666H21.6667V21.6666Z',
-                generic: 'M20 3.33331C10.8 3.33331 3.33337 10.8 3.33337 20C3.33337 29.2 10.8 36.6666 20 36.6666C29.2 36.6666 36.6667 29.2 36.6667 20C36.6667 10.8 29.2 3.33331 20 3.33331ZM21.6667 28.3333H18.3334V25H21.6667V28.3333ZM21.6667 21.6666H18.3334V11.6666H21.6667V21.6666Z',
-                success: 'M20 3.33331C10.8 3.33331 3.33337 10.8 3.33337 20C3.33337 29.2 10.8 36.6666 20 36.6666C29.2 36.6666 36.6667 29.2 36.6667 20C36.6667 10.8 29.2 3.33331 20 3.33331ZM21.6667 28.3333H18.3334V25H21.6667V28.3333ZM21.6667 21.6666H18.3334V11.6666H21.6667V21.6666Z'
-            }
-        };
-    },
-    async created() {
-        if (!this.user) {
-            await this.fetchAuthenticatedUser();
-        }
-        // Initialize user data on app load
-    },
-    methods: {
-        async fetchAuthenticatedUser() {
-            const user = JSON.parse(localStorage.getItem('user'));
-            if (user) {
-                try {
-                    // Optionally, check with the backend to verify the user is still authenticated
-                    const response = await axios.get('/api/user');
-
-                    // If user data is valid, set it to the state
-                    this.user = response.data;
-                } catch (error) {
-                    // If the user is not authenticated, clear the local storage and set user to null
-                    console.error('User session expired or not authenticated', error);
-                    localStorage.removeItem('user');
-                    this.user = null;
-                }
-            } else {
-                // If no user is found in local storage, fetch from backend
-                try {
-                    const response = await axios.get('/api/user');
-                    this.user = response.data;
-                    // Save fresh user data to local storage
-                    localStorage.setItem('user', (this.user) ? JSON.stringify(this.user) : null);
-                } catch (error) {
-                    //console.error('User is not authenticated', error);
-                    this.user = null;
-                }
-            }
-        },
-        clearUserSession() {
-            this.user = null;
-            localStorage.removeItem('user');
-            this.$notify({
-                group: "success",
-                title: "Success",
-                text: "Logged out successfully",
-            });
-        },
-        logout() {
-            axios.post('/api/logout')
-                .then(() => {
-                    this.clearUserSession();
-                })
-                .catch(error => {
-                    console.log('Logout failed', error);
-                    this.$notify({
-                        group: "error",
-                        title: "Error",
-                        text: "Failed to log out",
-                    });
-                });
-        }
-    },
-    watch: {
-        user(newVal) {
-            console.log("User changed:", newVal);
-        },
-    },
-    provide() {
-        return {
-            user: this.user, // Provide user to all child components
-        };
-    },
+// Initialiser window.Laravel hvis det ikke eksisterer
+window.Laravel = window.Laravel || {
+    permissions: [],
+    roles: []
 };
+
+const user = ref(null);
+const loading = ref(false);
+
+const notificationTypes = ['error', 'generic', 'success'];
+
+const bgColorClass = {
+    error: 'bg-red-500',
+    generic: 'bg-blue-500',
+    success: 'bg-green-500'
+};
+
+const textColorClass = {
+    error: 'text-red-500',
+    generic: 'text-blue-500',
+    success: 'text-blue-500'
+};
+
+const iconPath = {
+    error: 'M20 3.33331C10.8 3.33331 3.33337 10.8 3.33337 20C3.33337 29.2 10.8 36.6666 20 36.6666C29.2 36.6666 36.6667 29.2 36.6667 20C36.6667 10.8 29.2 3.33331 20 3.33331ZM21.6667 28.3333H18.3334V25H21.6667V28.3333ZM21.6667 21.6666H18.3334V11.6666H21.6667V21.6666Z',
+    generic: 'M20 3.33331C10.8 3.33331 3.33337 10.8 3.33337 20C3.33337 29.2 10.8 36.6666 20 36.6666C29.2 36.6666 36.6667 29.2 36.6667 20C36.6667 10.8 29.2 3.33331 20 3.33331ZM21.6667 28.3333H18.3334V25H21.6667V28.3333ZM21.6667 21.6666H18.3334V11.6666H21.6667V21.6666Z',
+    success: 'M20 3.33331C10.8 3.33331 3.33337 10.8 3.33337 20C3.33337 29.2 10.8 36.6666 20 36.6666C29.2 36.6666 36.6667 29.2 36.6667 20C36.6667 10.8 29.2 3.33331 20 3.33331ZM21.6667 28.3333H18.3334V25H21.6667V28.3333ZM21.6667 21.6666H18.3334V11.6666H21.6667V21.6666Z'
+};
+
+const router = useRouter();
+
+const fetchAuthenticatedUser = async () => {
+    try {
+        const response = await axios.get('/api/user');
+        user.value = response.data;
+        
+        if (user.value) {
+            localStorage.setItem('user', JSON.stringify(user.value));
+            // Oppdater Laravel objekt med permissions og roles
+            window.Laravel.permissions = response.data.permissions || [];
+            window.Laravel.roles = response.data.roles || [];
+        }
+        return user.value;
+    } catch (error) {
+        if (error.response?.status === 401) {
+            clearUserSession();
+        } else {
+            console.error('Error fetching user:', error);
+        }
+        return null;
+    }
+};
+
+const clearUserSession = () => {
+    user.value = null;
+    localStorage.removeItem('user');
+    localStorage.removeItem('token');
+    delete axios.defaults.headers.common['Authorization'];
+    // Nullstill Laravel objekt
+    window.Laravel.permissions = [];
+    window.Laravel.roles = [];
+    
+    notify({
+        group: "success",
+        title: "Success",
+        text: "Logged out successfully",
+    });
+};
+
+const handleLogout = async () => {
+    try {
+        await axios.post('/api/logout');
+        clearUserSession();
+        router.push('/');
+    } catch (error) {
+        console.error('Logout failed:', error);
+        notify({
+            group: "error",
+            title: "Error",
+            text: "Failed to log out",
+        });
+    }
+};
+
+// Kjør ved oppstart
+onMounted(async () => {
+    console.log('App mounted, checking authentication');
+    const token = localStorage.getItem('token');
+    if (token) {
+        axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+        await fetchAuthenticatedUser();
+    }
+});
+
+// Provide nødvendige funksjoner
+provide('fetchAuthenticatedUser', fetchAuthenticatedUser);
+
+// Watch for user changes
+watch(user, (newVal) => {
+    console.log("User changed:", newVal);
+});
 </script>

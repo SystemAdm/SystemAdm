@@ -1,0 +1,20 @@
+<?php
+return [
+    'crew_only' => 'Kun for crew',
+    'members_only' => 'Kun for medlemmer',
+    'age_max' => 'Maks: :age år',
+    'age_min' => 'Min: :age år',
+    'grade_max' => 'Maks: :grade. klasse',
+    'grade_min' => 'Min: :grade. klasse',
+    'event_begin' => 'Arrangement starter',
+    'event_end' => 'Arrangement slutter',
+    'date' => 'Dato',
+    'time' => 'Tid',
+    'cancelled' => 'Avlyst',
+    'status' => 'Status',
+    'planning_mode' => 'Under planlegging',
+    'seats_available' => ':available av :total plasser ledige',
+    'registration_not_needed' => 'Påmelding ikke nødvendig',
+    'unlimited_seats' => '∞ Ubegrenset',
+    'sign_me_up' => 'Meld meg på!',
+];

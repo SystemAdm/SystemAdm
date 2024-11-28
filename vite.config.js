@@ -25,4 +25,7 @@ export default defineConfig({
             vue: 'vue/dist/vue.esm-bundler.js',
         },
     },
+    define: {
+        'import.meta.env.VITE_APP_DEBUG': JSON.stringify(process.env.VITE_APP_DEBUG),
+    },
 });

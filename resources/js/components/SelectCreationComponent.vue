@@ -1,78 +1,109 @@
 <template>
-    <div>
-        <div class="mb-5">
-            <label class="block text-gray-700 text-sm font-bold mb-2">
-                Hva ønsker du å gjøre?
-            </label>
-            <div class="space-y-3">
-                <button 
-                    @click="selectOption('qr')"
-                    class="w-full text-left p-3 border rounded hover:bg-gray-100"
-                >
-                    Vis min QR-kode
-                </button>
-                <button 
-                    @click="selectOption('create_child')"
-                    class="w-full text-left p-3 border rounded hover:bg-gray-100"
-                >
-                    Registrere barn
-                </button>
-                <button 
-                    @click="selectOption('create_guardian')"
-                    class="w-full text-left p-3 border rounded hover:bg-gray-100"
-                >
-                    Registrere foresatt
-                </button>
+    <div class="text-gray-800">
+        <div class="space-y-4 mb-6">
+            <!-- QR Kode valg - tilgjengelig for alle -->
+            <div 
+                @click="handleShowQR"
+                class="p-4 border rounded-lg hover:bg-gray-50 cursor-pointer flex items-center justify-between"
+            >
+                <span class="flex items-center">
+                    <font-awesome-icon 
+                        :icon="['fas', 'qrcode']" 
+                        class="mr-3 text-gray-600"
+                    />
+                    {{ $t('auth.show_qr') }}
+                </span>
+                
+                <font-awesome-icon 
+                    :icon="['fas', 'arrow-right']" 
+                    class="text-gray-500"
+                />
+            </div>
+
+            <!-- Logg inn - kun for aktive brukere -->
+            <div 
+                v-if="user?.active"
+                @click="handleLogin"
+                class="p-4 border rounded-lg hover:bg-gray-50 cursor-pointer flex items-center justify-between"
+            >
+                <span class="flex items-center">
+                    <font-awesome-icon 
+                        :icon="['fas', 'right-to-bracket']" 
+                        class="mr-3 text-blue-600"
+                    />
+                    {{ $t('auth.login') }}
+                </span>
+                
+                <font-awesome-icon 
+                    :icon="['fas', 'arrow-right']" 
+                    class="text-gray-500"
+                />
+            </div>
+
+            <!-- Registrer bruker - kun for inaktive brukere -->
+            <div 
+                v-if="!user?.active"
+                @click="handleRegister"
+                class="p-4 border rounded-lg hover:bg-gray-50 cursor-pointer flex items-center justify-between"
+            >
+                <span class="flex items-center">
+                    <font-awesome-icon 
+                        :icon="['fas', 'user-plus']" 
+                        class="mr-3 text-green-600"
+                    />
+                    {{ $t(isGuardian ? 'auth.register_guardian' : 'auth.register_user') }}
+                </span>
+                
+                <font-awesome-icon 
+                    :icon="['fas', 'arrow-right']" 
+                    class="text-gray-500"
+                />
             </div>
         </div>
-        <ButtonBar :prev="prev" @close="$emit('close')" @back="back"></ButtonBar>
+
+        <ButtonBar 
+            :prev="prev"
+            :current-step="currentStep"
+            @back="handleBack"
+        />
     </div>
 </template>
-<script>
+
+<script setup>
 import ButtonBar from "./ButtonBar.vue";
 
-export default {
-    components: { ButtonBar },
-    props: {
-        prev: {
-            type: Array,
-            required: true
-        },
-        hasErrors: {
-            type: Object,
-            required: true
-        },
-        STEPS: {
-            type: Object,
-            required: true
-        }
+const props = defineProps({
+    user: {
+        type: Object,
+        required: true
     },
-    emits: ['sendErrors', 'close', 'back', 'success'],
-    methods: {
-        selectOption(option) {
-            let nextStep;
-            
-            switch(option) {
-                case 'qr':
-                    nextStep = this.STEPS.QR; // Steg 20
-                    break;
-                case 'create_child':
-                    nextStep = this.STEPS.CHILD_PHONE; // Steg for å registrere barn
-                    break;
-                case 'create_guardian':
-                    nextStep = this.STEPS.GUARDIAN_PHONE; // Steg for å registrere foresatt
-                    break;
-            }
-            
-            this.$emit('success', { 
-                option: option,
-                type: option === 'create_child' ? 'child' : 
-                      option === 'create_guardian' ? 'guardian' : 'user'
-            }, nextStep);
-        },
-        back(step) {
-            this.$emit('back', step);
-        }
+    isGuardian: {
+        type: Boolean,
+        default: false
+    },
+    prev: {
+        type: Array,
+        required: true
+    },
+    hasErrors: {
+        type: Object,
+        required: true
+    },
+    STEPS: {
+        type: Object,
+        required: true
+    },
+    currentStep: {
+        type: Number,
+        required: true
     }
-}
+});
+
+const emit = defineEmits(['back', 'showQR', 'login', 'register', 'reset']);
+
+// Hendelseshåndteringsmetoder
+const handleShowQR = () => emit('showQR');
+const handleLogin = () => emit('login');
+const handleRegister = () => emit('register');
+const handleBack = () => emit('back');
 </script>

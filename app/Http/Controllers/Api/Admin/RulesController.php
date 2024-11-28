@@ -13,7 +13,7 @@ class RulesController extends Controller
      */
     public function index()
     {
-        $rules = Rule::withTrashed()->with('location')->get();
+        $rules = Rule::withTrashed()->with('location')->get()->keyBy('id');
         $groupedRules = $rules->groupBy(function ($rule) {
             return $rule->location ? $rule->location->id : 'no_location';
         })->mapWithKeys(function ($rules, $locationId) {

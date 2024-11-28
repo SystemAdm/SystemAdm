@@ -1,38 +1,52 @@
 <template>
-    <a href="https://www.esrb.org/ratings-guide/" target="_blank"><img :src="pegi" alt="" :class="'h-'+(size?size:16)"></a>
+    <a href="https://www.esrb.org/ratings-guide/" target="_blank">
+        <img 
+            :src="esrbImage" 
+            :alt="esrbRating" 
+            :width="size" 
+            :height="size"
+        >
+    </a>
 </template>
 
-<script>
-export default {
-    props: {
-        age: {
-            type: Number,
-            required: true,
-        },
-        size:{
-            type: Number,
-        }
-    },
-    data() {
-        return {
-            pegi: '/images/esrb/E.svg', // Default PEGI image
-        }
-    },
-    watch: {
-        age(val) {
-            if (val >= 18) {
-                this.pegi = '/images/esrb/AO.svg';
-            } else if (val >= 17) {
-                this.pegi = '/images/esrb/M.svg';
-            } else if (val >= 13) {
-                this.pegi = '/images/esrb/T.svg';
-            } else if (val >= 10) {
-                this.pegi = '/images/esrb/E10plus.svg';
-            } else {
-                this.pegi = '/images/esrb/E.svg';
-            }
+<script setup>
+import { ref, watch, computed } from 'vue';
 
-        }
+const props = defineProps({
+    age: {
+        type: Number,
+        required: true,
+    },
+    size: {
+        type: Number,
+        default: 24
     }
-}
+});
+
+const ESRB_RATINGS = {
+    AO: { minAge: 18, file: 'AO.svg' },
+    M: { minAge: 17, file: 'M.svg' },
+    T: { minAge: 13, file: 'T.svg' },
+    E10: { minAge: 10, file: 'E10plus.svg' },
+    E: { minAge: 0, file: 'E.svg' }
+};
+
+const currentRating = ref('E');
+
+const esrbImage = computed(() => `/images/esrb/${ESRB_RATINGS[currentRating.value].file}`);
+const esrbRating = computed(() => currentRating.value);
+
+watch(() => props.age, (val) => {
+    if (val >= ESRB_RATINGS.AO.minAge) {
+        currentRating.value = 'AO';
+    } else if (val >= ESRB_RATINGS.M.minAge) {
+        currentRating.value = 'M';
+    } else if (val >= ESRB_RATINGS.T.minAge) {
+        currentRating.value = 'T';
+    } else if (val >= ESRB_RATINGS.E10.minAge) {
+        currentRating.value = 'E10';
+    } else {
+        currentRating.value = 'E';
+    }
+}, { immediate: true });
 </script>

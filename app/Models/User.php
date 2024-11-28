@@ -11,15 +11,17 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Cashier\Billable;
+use Laravel\Sanctum\HasApiTokens;
 use LaravelAndVueJS\Traits\LaravelPermissionToVueJS;
 use Spatie\Permission\Traits\HasPermissions;
 use Spatie\Permission\Traits\HasRoles;
 use Illuminate\Database\Eloquent\Casts\Attribute;
+use SimpleSoftwareIO\QrCode\Facades\QrCode;
 
 class User extends Authenticatable
 {
     /** @use HasFactory<UserFactory> */
-    use HasFactory, Notifiable, SoftDeletes, HasRoles, HasPermissions, Billable, LaravelPermissionToVueJS;
+    use HasApiTokens, HasFactory, Notifiable, SoftDeletes, HasRoles, HasPermissions, Billable, LaravelPermissionToVueJS;
 
     /**
      * The attributes that are mass assignable.
@@ -91,7 +93,7 @@ class User extends Authenticatable
             $this->given_name,
             $this->additional_name
         ])));
-        
+
         return trim(implode(', ', array_filter([
             $this->family_name,
             $givenAndAdditional
@@ -206,6 +208,48 @@ class User extends Authenticatable
     public function getRankAttribute(): ?object
     {
         return $this->roles()->orderBy('rank')->first() ?? null;
+    }
+
+    /**
+     * Generer en QR-kode for brukeren
+     *
+     * @return string SVG QR code
+     */
+    public function generateQrCode(): string
+{
+    $encodedId = $this->id * 35;
+    $qrText = "SpL{$encodedId}";
+
+    return QrCode::format('svg')
+        ->size(200)
+        ->margin(1)
+        ->errorCorrection('H')
+        ->generate($qrText);
+}
+
+    /**
+     * Dekod en QR-kode tekst for å finne bruker ID
+     *
+     * @param string $qrText
+     * @return int|null
+     */
+    public static function decodeQrText(string $qrText): ?int
+    {
+        // Sjekk om teksten starter med SpL
+        if (!str_starts_with($qrText, 'SpL')) {
+            return null;
+        }
+
+        // Hent ut tallet etter SpL
+        $encodedId = substr($qrText, 3);
+
+        // Sjekk om det er et gyldig tall
+        if (!is_numeric($encodedId)) {
+            return null;
+        }
+
+        // Del på 35 for å få original ID
+        return (int)($encodedId / 35);
     }
 
 }

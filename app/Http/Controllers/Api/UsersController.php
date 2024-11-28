@@ -8,11 +8,13 @@ use App\Models\Phone;
 use App\Models\User;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Log;
 use libphonenumber\NumberParseException;
 use libphonenumber\PhoneNumberUtil;
-use SimpleSoftwareIO\QrCode\Facades\QrCode;
 
 class UsersController extends Controller
 {
@@ -100,7 +102,7 @@ class UsersController extends Controller
 
         } catch (\Exception $e) {
             DB::rollBack();
-            
+
             return response()->json([
                 'message' => 'Failed to create user',
                 'error' => $e->getMessage()
@@ -114,7 +116,7 @@ class UsersController extends Controller
     private function attachPhone(User $user, string $phoneNumber): void
     {
         $phoneUtil = $this->phoneUtil->parse($phoneNumber, 'NO');
-        
+
         if (!$this->phoneUtil->isValidNumber($phoneUtil)) {
             throw new \InvalidArgumentException('Invalid phone number');
         }
@@ -134,7 +136,7 @@ class UsersController extends Controller
     {
         $emailParts = explode('@', $emailAddress);
         $domainParts = explode('.', $emailParts[1]);
-        
+
         $email = Email::firstOrCreate([
             'name' => $emailParts[0],
             'domain' => implode('.', array_slice($domainParts, 0, -1)),
@@ -235,26 +237,24 @@ class UsersController extends Controller
 
     public function me(Request $request)
     {
-        return User::with('phones')->find($request->user()->id);
+        return User::with('phones','emails')->find($request->user()->id);
     }
 
-    public function qr(Request $request, $id)
+    public function qr(User $user)
     {
-        $u = $id;
-        $i = $u * 35;
-        $w = 'SpL';
+        $qrCode = $user->generateQrCode();
 
-        $riddle = $w . $i;
-        
-        // Generer QR-kode som SVG i stedet for PNG
-        $qrCode = QrCode::size(200)
-            ->style('round')
-            ->eye('circle')
-            ->color(0, 0, 0)
-            ->margin(1)
-            ->generate($riddle);
+        // Sjekk om klienten forventer JSON
+        if (request()->expectsJson()) {
+            return response()->json([
+                'svg' => $qrCode
+            ]);
+        }
 
-        return response($qrCode)->header('Content-Type', 'image/svg+xml');
+        // Ellers returner SVG direkte med riktige headers
+        return response($qrCode)
+            ->header('Content-Type', 'image/svg+xml')
+            ->header('Cache-Control', 'no-cache, no-store, must-revalidate');
     }
 
     public function check(Request $request)
@@ -265,5 +265,95 @@ class UsersController extends Controller
 
         $auth = Hash::check($pwd, $user->password);
         return response()->json($auth);
+    }
+
+    public function login(Request $request)
+    {
+        $request->validate([
+            'user_id' => 'required|exists:users,id'
+        ]);
+
+        $user = User::findOrFail($request->user_id);
+
+        Auth::login($user);
+
+        // Generer Sanctum token
+        $token = $user->createToken('auth-token')->plainTextToken;
+
+        return response()->json([
+            'success' => true,
+            'token' => $token
+        ]);
+    }
+
+    public function activate(Request $request)
+    {
+        // Hent og dekrypter den midlertidige nøkkelen
+        $encryptedKey = session('temp_key');
+        $tempKey = Crypt::decryptString($encryptedKey);
+
+        // Dekrypter passordet med den midlertidige nøkkelen
+        $decrypted = decrypt($request->password, $tempKey);
+
+        // Hash passordet for lagring
+        $hashedPassword = Hash::make($decrypted);
+    }
+
+    /**
+     * Get the authenticated user with permissions
+     *
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function user(Request $request)
+    {
+        $user = $request->user();
+
+        if (!$user) {
+            return response()->json(null);
+        }
+
+        // Load permissions
+        $permissions = $user->getAllPermissions()->pluck('name');
+
+        // Add permissions to user object
+        $userData = $user->toArray();
+        $userData['permissions'] = $permissions;
+
+        return response()->json($userData);
+    }
+
+    /**
+     * Logout the user and invalidate their token
+     *
+     * @param Request $request
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function logout(Request $request)
+    {
+        try {
+            // Slett brukerens nåværende token
+            if ($request->user()) {
+                $request->user()->currentAccessToken()->delete();
+            }
+
+            // Logg ut brukeren
+            Auth::guard('web')->logout();
+
+            // Invalider sesjonen
+            $request->session()->invalidate();
+            $request->session()->regenerateToken();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Successfully logged out'
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Logout error: ' . $e->getMessage());
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to logout'
+            ], 500);
+        }
     }
 }

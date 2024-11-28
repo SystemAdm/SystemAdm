@@ -15,31 +15,40 @@ import {
     faCheck,
     faClock,
     faEnvelope,
+    faEye,
+    faEyeSlash,
     faIdCard,
+    faInfoCircle,
     faLock,
     faMagnifyingGlass,
     faMapMarker,
     faPeoplePulling,
     faPhone,
+    faPlus,
     faQrcode,
-    faShield,
+    faRightToBracket,
+    faRotateLeft,
+    faShield, faTrash,
     faTrashCan,
     faTrashCanArrowUp,
+    faTriangleExclamation,
     faUser,
-    faXmark
+    faUserPlus,
+    faXmark,
 } from '@fortawesome/free-solid-svg-icons'
 
-library.add(faUser, faMagnifyingGlass, faEnvelope, faPhone, faMapMarker, faShield, faQrcode, faIdCard, faBars, faTrashCan, faArrowRight, faArrowLeft, faLock, faClock, faCheck, faTrashCanArrowUp, faXmark, faPeoplePulling);
+library.add(faUser, faMagnifyingGlass, faEnvelope, faPhone, faMapMarker, faShield, faQrcode, faIdCard, faBars, faTrashCan, faArrowRight, faArrowLeft, faLock, faClock, faCheck, faTrashCanArrowUp, faXmark, faPeoplePulling, faUserPlus, faEye, faEyeSlash, faRightToBracket, faRotateLeft, faInfoCircle, faPlus, faTriangleExclamation,faTrash);
 axios.defaults.withCredentials = true;
 
 // Define routes
 const routes = [
-    {name: 'AdminRules', path: '/admins/rules', component: () => import('./components/admin/pages/RulesIndex.vue')},
+    {name: 'Dashboard', path: '/dashboard', component: () => import('./components/pages/Dashboard.vue')},
+    {name: 'AdminRules', path: '/admin/rules', component: () => import('./components/admin/pages/RulesIndex.vue')},
     {name: 'RulesIndex', path: '/rules', component: () => import('./components/pages/RulesIndex.vue')},
     {name: 'Membership', path: '/member', component: () => import('./components/pages/Membership.vue')},
     {name: 'Index', path: '/', component: () => import('./components/pages/Home.vue')}, // Home should be loaded on the root route
     {name: 'EventsIndex', path: '/events', component: () => import('./components/pages/EventsIndex.vue')},
-    {name: 'Signup', path: '/signup', component: () => import( './components/pages/Signup.vue')},
+    {name: 'WhoAmI?', path: '/login', component: () => import( './components/pages/Signup.vue')},
     {name: 'MyProfile', path: '/profiles/me', component: () => import('./components/pages/MyProfile.vue')},
     {name: 'ProfilesIndex', path: '/profiles', component: () => import('./components/pages/ProfilesIndex.vue')},
     {name: 'ProfilesShow', path: '/profiles/:user', component: () => import('./components/pages/ProfilesShow.vue')},
@@ -59,7 +68,7 @@ const router = createRouter({
 });
 
 // Create and mount the app
-createApp(App)
+const app = createApp(App)
     .component('font-awesome-icon', FontAwesomeIcon)
     .use(i18nVue, {
         lang: 'no',
@@ -70,5 +79,6 @@ createApp(App)
     })
     .use(router)
     .use(Notifications)
-    .use(LaravelPermissionToVueJS)
-    .mount('#app');
+    .use(LaravelPermissionToVueJS);
+
+app.mount('#app');

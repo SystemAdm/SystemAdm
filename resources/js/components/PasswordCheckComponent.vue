@@ -1,87 +1,133 @@
 <template>
-    <div class="mb-5">
-        <label class="block text-gray-700 text-sm font-bold mb-2" for="password">
-            Passord <span class="text-red-700">*</span>
-            <span class="block text-gray-400 text-sm">Denne kontoen er beskyttet med passord</span>
-        </label>
-        <input
-            class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-            id="password"
-            type="password"
-            placeholder="Passord"
-            v-model="password"
-            required
-            :class="{'border-red-700': hasErrors.password}"
-            @focus="sendErrors({password: false})">
-        <span class="ml-3 mt-2 block text-red-700" v-if="hasErrors.password">{{ hasErrors.password }}</span>
+    <div class="password-check">
+        <div class="mb-5">
+            <label class="block text-gray-700 text-sm font-bold mb-2" for="password">
+                {{ $t('auth.password') }} <span class="text-red-700">*</span>
+                <span class="block text-gray-400 text-sm">
+                    {{ $t('auth.password_protected_account') }}
+                </span>
+            </label>
+            
+            <div class="relative">
+                <input
+                    ref="passwordInput"
+                    class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline pr-10"
+                    :class="{'border-red-700': hasErrors.password}"
+                    id="password"
+                    :type="showPassword ? 'text' : 'password'"
+                    :placeholder="$t('auth.password_placeholder')"
+                    v-model="password"
+                    required
+                    @focus="clearError"
+                    @keyup.enter="check"
+                    :disabled="isLoading">
+                    
+                <button 
+                    type="button"
+                    class="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-600"
+                    @click="togglePassword"
+                    :disabled="isLoading">
+                    <font-awesome-icon 
+                        :icon="['fas', showPassword ? 'eye-slash' : 'eye']"
+                        class="hover:text-gray-800"
+                    />
+                </button>
+            </div>
+
+            <span 
+                v-if="hasErrors.password" 
+                class="ml-3 mt-2 block text-red-700 text-sm"
+            >
+                {{ hasErrors.password }}
+            </span>
+        </div>
+
+        <ButtonBar 
+            :prev="prev" 
+            :next="true" 
+            :loading="isLoading"
+            :current-step="currentStep"
+            @close="handleClose"
+            @go="check" 
+            @back="back"
+        />
     </div>
-    <ButtonBar :prev="prev" :next="true" @close="$emit('close')" @go="check" @back="back"></ButtonBar>
 </template>
 
-<script>
+<script setup>
 import ButtonBar from "./ButtonBar.vue";
 import axios from "axios";
-export default {
-    components: {ButtonBar},
-    props: {
-        prev: {
-            type: Array,
-            required: true
-        },
-        hasErrors: {
-            type: Object,
-            required: true
-        },
-        selected: {
-            type: Object,
-            required: true
-        },
-        STEPS: {
-            type: Object,
-            required: true
-        }
+import { ref, onMounted } from 'vue';
+
+const props = defineProps({
+    selected: {
+        type: Object,
+        required: true
     },
-    emits: ['sendErrors', 'close', 'back', 'success'],
-    data() {
-        return {
-            password: null,
-        }
+    hasErrors: {
+        type: Object,
+        required: true
     },
-    methods: {
-        sendErrors(value) {
-            this.$emit('sendErrors', value);
-        },
-        check() {
-            if (this.password == null) {
-                this.sendErrors({password: 'Passord må fylles ut'});
-                return;
-            }
-            
-            console.log('Checking password for user:', this.selected);
-            
-            axios.post('/api/users/check', {
-                p: this.password, 
-                u: this.selected.id
-            })
-            .then(response => {
-                console.log('Password check response:', response.data);
-                if (response.data === true) {
-                    this.$emit('success', { 
-                        password: this.password,
-                        selected: this.selected 
-                    }, 11); // Endret fra 19 til 11 (CREATION_SELECT)
-                } else {
-                    this.sendErrors({password: 'Feil passord'});
-                }
-            })
-            .catch(error => {
-                console.error('Password check error:', error);
-                this.sendErrors({password: 'En feil oppstod under passordsjekk'});
-            });
-        },
-        back(step) {
-            this.$emit('back', step);
-        }
+    prev: {
+        type: Array,
+        required: true
+    },
+    STEPS: {
+        type: Object,
+        required: true
+    },
+    currentStep: {
+        type: Number,
+        required: true
     }
-}
+});
+
+const emit = defineEmits(['sendErrors', 'close', 'back', 'success']);
+
+const password = ref('');
+const showPassword = ref(false);
+const isLoading = ref(false);
+const passwordInput = ref(null);
+
+// Hendelseshåndteringsmetoder
+const clearError = () => emit('sendErrors', { password: false });
+const togglePassword = () => showPassword.value = !showPassword.value;
+const back = () => emit('back');
+const handleClose = () => emit('close');  // Ny metode for å håndtere close
+
+const check = async () => {
+    if (!password.value) {
+        emit('sendErrors', { password: 'auth.password_required' });
+        return;
+    }
+    
+    isLoading.value = true;
+    
+    try {
+        const response = await axios.post('/api/users/check', {
+            p: password.value, 
+            u: props.selected.id
+        });
+        
+        if (response.data === true) {
+            emit('success', { 
+                password: password.value,
+                selected: props.selected 
+            });
+        } else {
+            emit('sendErrors', { password: 'auth.password_incorrect' });
+        }
+    } catch (error) {
+        console.error('Password check error:', error);
+        emit('sendErrors', { 
+            password: error.response?.data?.message || 'auth.password_check_error' 
+        });
+    } finally {
+        isLoading.value = false;
+    }
+};
+
+onMounted(() => {
+    passwordInput.value?.focus();
+});
 </script>
