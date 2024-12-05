@@ -8,10 +8,11 @@ use Illuminate\Support\Facades\Route;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
+Route::middleware(['api', 'session'])->post('/logout', [UsersController::class, 'logout']);
 // Auth routes
 Route::middleware('auth:sanctum')->group(function () {
     Route::get('/user', [UsersController::class, 'user']);
-    Route::post('/logout', [UsersController::class, 'logout']);
+    //Route::post('/logout', [UsersController::class, 'logout']);
 });
 
 // Public routes
@@ -35,6 +36,7 @@ Route::prefix('users')->group(function () {
         Route::get('/me', [UsersController::class, 'me']);
         Route::get('/{id}/qr', [UsersController::class, 'qr']);
     });
+    Route::get('/{id}/qr', [UsersController::class, 'qr']);
     Route::post('/login', [UsersController::class, 'login']);
     Route::post('/check', [UsersController::class, 'check']);
     Route::post('/validate_phone', [UsersController::class, 'validatePhone']);

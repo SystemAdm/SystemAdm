@@ -8,13 +8,15 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class Profile extends Model
 {
-    protected $appends = ['pegi', 'esrb', 'age','image'];
-    protected $hidden = ['citizen','bank_account'];
+    protected $fillable = ['user_id', 'avatar', 'birthday', 'citizen', 'bank_account', 'postal_code'];
+    protected $appends = ['pegi', 'esrb', 'age', 'image'];
+    protected $hidden = ['citizen', 'bank_account'];
 
-    public function getImageAttribute() {
+    public function getImageAttribute()
+    {
         if ($this->avatar == null) {
             return asset('images/silhouette.png');
-        } else{
+        } else {
             return asset($this->avatar);
         }
     }
@@ -79,6 +81,6 @@ class Profile extends Model
 
     public function postal(): BelongsTo
     {
-        return $this->belongsTo(Postal::class,'postal_code','code');
+        return $this->belongsTo(Postal::class, 'postal_code', 'code');
     }
 }

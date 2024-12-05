@@ -3,6 +3,8 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Email extends Model
 {
@@ -21,7 +23,7 @@ class Email extends Model
     /**
      * Get the users associated with this email address
      *
-     * @return \Illuminate\Database\Eloquent\Relations\BelongsToMany<User>
+     * @return BelongsToMany<User>
      */
     public function users(): BelongsToMany
     {

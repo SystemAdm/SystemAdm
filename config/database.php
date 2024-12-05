@@ -111,6 +111,35 @@ return [
             // 'encrypt' => env('DB_ENCRYPT', 'yes'),
             // 'trust_server_certificate' => env('DB_TRUST_SERVER_CERTIFICATE', 'false'),
         ],
+        'mariadb_primary' => [
+            'driver' => 'mysql', // Bruk 'mysql' som driver for MariaDB også
+            'host' => env('DB_PRIMARY_HOST', '127.0.0.1'),
+            'port' => env('DB_PRIMARY_PORT', '3306'),
+            'database' => env('DB_PRIMARY_DATABASE', 'laravel'),
+            'username' => env('DB_PRIMARY_USERNAME', 'root'),
+            'password' => env('DB_PRIMARY_PASSWORD', ''),
+            'unix_socket' => env('DB_PRIMARY_SOCKET', ''),
+            'charset' => 'utf8mb4',
+            'collation' => 'utf8mb4_unicode_ci',
+            'prefix' => '',
+            'strict' => true,
+            'engine' => null,
+        ],
+
+        'mariadb_secondary' => [
+            'driver' => 'mysql',
+            'host' => env('DB_SECONDARY_HOST', '127.0.0.1'),
+            'port' => env('DB_SECONDARY_PORT', '3306'),
+            'database' => env('DB_SECONDARY_DATABASE', 'laravel'),
+            'username' => env('DB_SECONDARY_USERNAME', 'root'),
+            'password' => env('DB_SECONDARY_PASSWORD', ''),
+            'unix_socket' => env('DB_SECONDARY_SOCKET', ''),
+            'charset' => 'utf8mb4',
+            'collation' => 'utf8mb4_unicode_ci',
+            'prefix' => '',
+            'strict' => true,
+            'engine' => null,
+        ],
 
     ],
 

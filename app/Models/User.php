@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Database\Factories\UserFactory;
+use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -13,10 +14,9 @@ use Illuminate\Notifications\Notifiable;
 use Laravel\Cashier\Billable;
 use Laravel\Sanctum\HasApiTokens;
 use LaravelAndVueJS\Traits\LaravelPermissionToVueJS;
+use SimpleSoftwareIO\QrCode\Facades\QrCode;
 use Spatie\Permission\Traits\HasPermissions;
 use Spatie\Permission\Traits\HasRoles;
-use Illuminate\Database\Eloquent\Casts\Attribute;
-use SimpleSoftwareIO\QrCode\Facades\QrCode;
 
 class User extends Authenticatable
 {
@@ -106,7 +106,7 @@ class User extends Authenticatable
     protected function givenName(): Attribute
     {
         return Attribute::make(
-            set: fn (string $value) => ucfirst(trim($value))
+            set: fn(string $value) => ucfirst(trim($value))
         );
     }
 
@@ -116,7 +116,7 @@ class User extends Authenticatable
     protected function additionalName(): Attribute
     {
         return Attribute::make(
-            set: fn (?string $value) => $value ? ucfirst(trim($value)) : null
+            set: fn(?string $value) => $value ? ucfirst(trim($value)) : null
         );
     }
 
@@ -126,7 +126,7 @@ class User extends Authenticatable
     protected function familyName(): Attribute
     {
         return Attribute::make(
-            set: fn (string $value) => ucfirst(trim($value))
+            set: fn(string $value) => ucfirst(trim($value))
         );
     }
 
@@ -216,16 +216,16 @@ class User extends Authenticatable
      * @return string SVG QR code
      */
     public function generateQrCode(): string
-{
-    $encodedId = $this->id * 35;
-    $qrText = "SpL{$encodedId}";
+    {
+        $encodedId = $this->id * 35;
+        $qrText = "SpL{$encodedId}";
 
-    return QrCode::format('svg')
-        ->size(200)
-        ->margin(1)
-        ->errorCorrection('H')
-        ->generate($qrText);
-}
+        return QrCode::format('svg')
+            ->size(200)
+            ->margin(1)
+            ->errorCorrection('H')
+            ->generate($qrText);
+    }
 
     /**
      * Dekod en QR-kode tekst for å finne bruker ID

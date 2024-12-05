@@ -4,17 +4,20 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Phone extends Model
 {
+    use SoftDeletes;
+
     protected $fillable = [
-        'country','number'
+        'country', 'number'
     ];
 
     /**
      * Get the users associated with this phone number
      *
-     * @return \Illuminate\Database\Eloquent\Relations\BelongsToMany<User>
+     * @return BelongsToMany<User>
      */
     public function users(): BelongsToMany
     {

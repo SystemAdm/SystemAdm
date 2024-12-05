@@ -27,7 +27,7 @@
             <label class="block text-gray-700 text-sm font-bold mb-2">
                 {{ $t('common.guardian_relation') }} <span class="text-red-500">*</span>
             </label>
-            <select 
+            <select
                 v-model="selectedRelation"
                 class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
                 required
@@ -41,7 +41,7 @@
 
         <ButtonBar
             :prev="prev"
-            :next="true"
+            :hasNext="true"
             :disabled="isGuardian && !selectedRelation"
             :current-step="currentStep"
             @close="handleClose"
@@ -101,15 +101,15 @@ const sendErrors = (value) => {
 
 const validateAndContinue = () => {
     if (!given_name.value || !family_name.value) {
-        emit('sendErrors', { 
-            name: trans('common.validation.name.required') 
+        emit('sendErrors', {
+            name: trans('common.validation.name.required')
         });
         return;
     }
 
     if (props.isGuardian && !selectedRelation.value) {
-        emit('sendErrors', { 
-            relation: trans('common.validation.relation.required') 
+        emit('sendErrors', {
+            relation: trans('common.validation.relation.required')
         });
         return;
     }

@@ -151,7 +151,7 @@ class Event extends Model
         if ($date === null) {
             return '';
         }
-        
+
         $carbon = new Carbon($date);
         $string = $carbon->format('D d M Y H:i');
         $string = strtr($string, self::DAYS);
@@ -211,7 +211,7 @@ class Event extends Model
      */
     public function getEventBeganAttribute(): bool
     {
-        return Carbon::parse($this->event_begin)->isPast() 
+        return Carbon::parse($this->event_begin)->isPast()
             && Carbon::parse($this->event_end)->isFuture();
     }
 
@@ -241,7 +241,7 @@ class Event extends Model
      */
     public function getDurationDaysAttribute(): int
     {
-        return (int) round(Carbon::parse($this->event_begin)
+        return (int)round(Carbon::parse($this->event_begin)
             ->diffInDays(Carbon::parse($this->event_end), false));
     }
 
@@ -250,7 +250,7 @@ class Event extends Model
      */
     public function getDurationHoursAttribute(): int
     {
-        return (int) round(Carbon::parse($this->event_begin)
+        return (int)round(Carbon::parse($this->event_begin)
             ->diffInHours(Carbon::parse($this->event_end), false));
     }
 

@@ -71,6 +71,7 @@ class UsersController extends Controller
             'family_name' => ['required', 'string', 'min:2', 'max:32'],
             'phone' => ['required_without:email', 'nullable', 'string'],
             'email' => ['required_without:phone', 'nullable', 'email'],
+            'birthday' => ['nullable','date']
         ]);
 
         try {
@@ -90,7 +91,7 @@ class UsersController extends Controller
                 $this->attachEmail($user, $validated['email']);
             }
 
-            $user->profile()->create();
+            $user->profile()->create(['birthday' => $validated['birthday'] ?? null]);
             $user->assignRole('Member');
 
             DB::commit();
@@ -331,24 +332,37 @@ class UsersController extends Controller
     public function logout(Request $request)
     {
         try {
+            Log::info('has token and user');
             // Slett brukerens nåværende token
-            if ($request->user()) {
+            if ($request->user() && $request->user()->currentAccessToken()) {
                 $request->user()->currentAccessToken()->delete();
             }
-
+            Log::info('has user');
             // Logg ut brukeren
             Auth::guard('web')->logout();
 
-            // Invalider sesjonen
-            $request->session()->invalidate();
-            $request->session()->regenerateToken();
+            Log::info('has none');
 
+            if ($request->hasSession()) {
+                // Invalider sesjonen
+                if (!$request->session()->isStarted()) {
+                    $request->session()->start();
+                }
+                Log::info('Session initiated:', ['isStarted' => $request->session()->isStarted()]);
+                $request->session()->invalidate();
+                Log::info('invalidated');
+                $request->session()->regenerateToken();
+                Log::info('regenerated');
+            }
             return response()->json([
                 'success' => true,
                 'message' => 'Successfully logged out'
             ]);
         } catch (\Exception $e) {
-            Log::error('Logout error: ' . $e->getMessage());
+            Log::error('Logout error: ' . $e->getMessage(), [
+                'user_id' => optional($request->user())->id,
+                'exception' => $e
+            ]);
 
             return response()->json([
                 'success' => false,

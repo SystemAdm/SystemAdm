@@ -21,12 +21,12 @@
         <div class="bg-gray-50 p-4 rounded-lg mb-6">
             <div class="flex justify-between items-center mb-4">
                 <h3 class="font-semibold">{{ $t('common.guardian_section') }}</h3>
-                <button 
+                <button
                     v-if="!registration.guardian && (isAgeValid || !registration.guardian)"
                     @click="addGuardian"
                     class="inline-flex items-center px-4 py-2 text-sm font-medium text-blue-600 bg-blue-50 rounded-md hover:bg-blue-100"
                 >
-                    <font-awesome-icon :icon="['fas', 'plus']" class="mr-2" />
+                    <font-awesome-icon :icon="['fas', 'plus']" class="mr-2"/>
                     {{ $t('common.add_guardian') }}
                 </button>
             </div>
@@ -38,7 +38,9 @@
                         <dt class="w-1/3 text-gray-600">{{ $t('common.name') }}:</dt>
                         <dd class="w-2/3">
                             {{ registration.guardian.given_name }} {{ registration.guardian.family_name }}
-                            <span class="text-gray-500 text-sm">({{ $t(`common.relations.${registration.guardian.relation}`) }})</span>
+                            <span class="text-gray-500 text-sm">({{
+                                    $t(`common.relations.${registration.guardian.relation}`)
+                                }})</span>
                         </dd>
                     </div>
                     <div class="flex">
@@ -47,12 +49,13 @@
                     </div>
                 </dl>
             </template>
-            
+
             <!-- Vis melding basert på alder -->
             <div v-else class="text-sm" :class="!isAgeValid ? 'text-red-600' : 'text-gray-600'">
-                {{ !isAgeValid 
-                    ? $t('common.guardian_required_message') 
-                    : $t('common.guardian_optional_message') 
+                {{
+                    !isAgeValid
+                        ? $t('common.guardian_required_message')
+                        : $t('common.guardian_optional_message')
                 }}
             </div>
         </div>
@@ -71,15 +74,15 @@
         <!-- Privacy Notice godkjenning -->
         <div class="mb-6">
             <label class="flex items-start space-x-2 cursor-pointer">
-                <input 
-                    type="checkbox" 
+                <input
+                    type="checkbox"
                     v-model="privacyAccepted"
                     class="mt-1"
                     required
                 >
                 <span class="text-sm">
                     {{ $t('common.privacy_acceptance') }}
-                    <button 
+                    <button
                         @click="showPrivacyNotice"
                         class="text-blue-600 hover:underline"
                     >
@@ -89,12 +92,12 @@
             </label>
         </div>
 
-        <PrivacyNoticeComponent />
+        <PrivacyNoticeComponent/>
 
         <div class="consent-checkbox">
-            <input 
-                type="checkbox" 
-                v-model="hasAccepted" 
+            <input
+                type="checkbox"
+                v-model="hasAccepted"
                 id="gdpr-consent"
             >
             <label for="gdpr-consent">
@@ -102,9 +105,9 @@
             </label>
         </div>
 
-        <ButtonBar 
+        <ButtonBar
             :prev="prev"
-            :next="true"
+            :hasNext="true"
             :submit="true"
             :current-step="currentStep"
             :disabled="!privacyAccepted"
@@ -115,11 +118,10 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue';
+import {computed, ref} from 'vue';
 import ButtonBar from './ButtonBar.vue';
-import axios from 'axios';
 import PrivacyNoticeComponent from './PrivacyNoticeComponent.vue'
-import { calculateAge } from './utils/age.js';
+import {calculateAge} from './utils/age.js';
 
 const privacyAccepted = ref(false);
 const hasAccepted = ref(false);
@@ -171,19 +173,7 @@ const showPrivacyNotice = () => {
 
 const handleSubmit = async () => {
     if (!privacyAccepted.value) return;
-
-    try {
-        // Lagre godkjenning av retningslinjer
-        const response = await axios.post('/api/registration/summary', props.registration);
-        
-        // Emit success istedenfor å endre step direkte
-        emit('success', { agreed: true });
-        
-    } catch (error) {
-        console.error('Summary agreement failed:', error);
-        // Her kan du legge til feilhåndtering, f.eks:
-        // emit('sendErrors', error.response?.data?.errors);
-    }
+    emit('success', {agreed: true});
 };
 
 // Beregn om alderen er gyldig (over 18)

@@ -1,7 +1,7 @@
 <template>
     <div class="mb-5">
         <label class="block text-gray-700 text-sm font-bold mb-2" :for="id">
-            {{ $t('common.' + id) }} <span v-if="required" class="text-red-700">*</span>
+            {{ trans('common.' + id) }} <span v-if="required" class="text-red-700">*</span>
         </label>
         <input
             :class="[
@@ -13,7 +13,7 @@
             :value="modelValue"
             @input="$emit('update:modelValue', $event.target.value)"
             :required="required"
-            :placeholder="$t('common.' + id)"
+            :placeholder="trans('common.' + id)"
             @focus="$emit('sendErrors', { [id]: false })"
         />
         <span v-if="hasError" class="ml-3 mt-2 block text-red-700">{{ hasError }}</span>
@@ -21,6 +21,8 @@
 </template>
 
 <script setup>
+import {trans} from "laravel-vue-i18n";
+
 defineProps({
     id: String,
     modelValue: String,

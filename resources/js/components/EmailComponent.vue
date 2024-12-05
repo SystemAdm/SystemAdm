@@ -1,7 +1,7 @@
 <template>
     <div class="max-w-2xl mx-auto">
         <h2 v-if="guardian" class="text-3xl mb-6">{{ $t('common.guardian_parent') }}</h2>
-        
+
         <EmailInput
             id="email"
             v-model="email"
@@ -23,7 +23,7 @@
         />
 
         <div class="mb-5">
-            <span 
+            <span
                 class="block text-sm hover:cursor-pointer text-blue-700"
                 @click="handlePhoneClick"
             >
@@ -31,9 +31,9 @@
             </span>
         </div>
 
-        <ButtonBar 
+        <ButtonBar
             :prev="prev"
-            :next="true"
+            :hasNext="true"
             :current-step="currentStep"
             @go="validateEmail"
             @back="handleBack"
@@ -112,7 +112,7 @@ const validateEmail = async () => {
     }
 
     try {
-        const response = await axios.post('/api/users/verify_email', {
+        const response = await axios.post('/api/users/validate_email', {
             email: email.value
         });
         emit('success', { email: email.value });

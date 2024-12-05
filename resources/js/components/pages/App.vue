@@ -1,7 +1,7 @@
 <!-- App.vue -->
 <template>
     <div class="w-full">
-        <Navbar :user="user" @handle-logout="handleLogout" />
+        <Navbar :user="user" @testClick="handleLogout" />
         <div class="py-5">
             <router-view :me="user"/>
         </div>
@@ -89,7 +89,7 @@ const fetchAuthenticatedUser = async () => {
     try {
         const response = await axios.get('/api/user');
         user.value = response.data;
-        
+
         if (user.value) {
             localStorage.setItem('user', JSON.stringify(user.value));
             // Oppdater Laravel objekt med permissions og roles
@@ -115,7 +115,7 @@ const clearUserSession = () => {
     // Nullstill Laravel objekt
     window.Laravel.permissions = [];
     window.Laravel.roles = [];
-    
+
     notify({
         group: "success",
         title: "Success",

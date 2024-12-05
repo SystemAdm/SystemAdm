@@ -15,8 +15,8 @@
         <ul class="hidden absolute top-1/2 left-1/2 transform -translate-y-1/2 -translate-x-1/2 lg:flex lg:mx-auto lg:items-center lg:w-auto lg:space-x-6"
             :class="{ 'hidden': isMenuOpen }">
             <li v-for="(item, key) in menu" :key="key">
-                <router-link 
-                    active-class="text-blue-600 hover:text-blue-600 text-bold" 
+                <router-link
+                    active-class="text-blue-600 hover:text-blue-600 text-bold"
                     class="font-bold text-white hover:text-blue-600"
                     :to="item.url"
                 >
@@ -28,7 +28,7 @@
         <div v-if="!user" class="hidden lg:flex lg:items-center lg:space-x-3">
             <router-link
                 class="py-2 px-6 bg-gray-50 hover:bg-gray-100 text-sm text-gray-900 font-bold rounded-xl transition duration-200"
-                to="/login">{{ $t('auth.sign_in') }}
+                to="/login">{{ t('auth.sign_in') }}
             </router-link>
         </div>
 
@@ -36,15 +36,15 @@
             <span class="text-white mr-4">
                 {{ user.given_name }} {{ user.family_name }}
             </span>
-            <button 
+            <button
                 class="py-2 px-6 bg-gray-50 hover:bg-gray-100 text-sm text-gray-900 font-bold rounded-xl transition duration-200"
                 @click="handleLogoutClick">
-                {{ $t('auth.sign_out') }}
+                {{ t('auth.sign_out') }}
             </button>
         </div>
 
         <!-- Admin badge - bruk v-if med can metode -->
-        <div v-if="user && can('access_admin')" 
+        <div v-if="user && can('access_admin')"
              class="hidden lg:inline-block px-2 py-1 bg-red-500 text-white text-xs font-bold rounded ml-2">
             Admin
         </div>
@@ -69,10 +69,10 @@
             </div>
 
             <div v-if="!user" class="mb-5">
-                <router-link 
+                <router-link
                     @click="toggleMenu"
                     class="block mb-3 py-2 px-6 bg-gray-50 hover:bg-gray-100 text-sm text-gray-900 font-bold rounded-xl transition duration-200"
-                    to="/login">{{ $t('auth.sign_in') }}
+                    to="/login">{{ t('auth.sign_in') }}
                 </router-link>
             </div>
 
@@ -80,18 +80,18 @@
                 <span class="block text-white mb-3">
                     {{ user.given_name }} {{ user.family_name }}
                 </span>
-                <button 
+                <button
                     class="block w-full py-2 px-6 bg-gray-50 hover:bg-gray-100 text-sm text-gray-900 font-bold rounded-xl transition duration-200"
                     @click="handleLogoutClick">
-                    {{ $t('auth.sign_out') }}
+                    {{ t('auth.sign_out') }}
                 </button>
             </div>
 
             <ul>
                 <li v-for="(item, key) in menu" :key="key" class="mb-1">
-                    <router-link 
+                    <router-link
                         @click="toggleMenu"
-                        active-class="text-blue-600 hover:text-blue-600 text-bold" 
+                        active-class="text-blue-600 hover:text-blue-600 text-bold"
                         class="font-bold text-white hover:text-blue-600"
                         :to="item.url"
                     >
@@ -107,7 +107,7 @@
 import { ref, computed } from 'vue';
 import { notify } from './utils/notify';
 import { trans } from 'laravel-vue-i18n';
-
+const t = trans;
 const props = defineProps({
     user: {
         type: Object,
@@ -116,7 +116,7 @@ const props = defineProps({
 });
 
 // Definer emits
-defineEmits(['handle-logout']);
+const emit = defineEmits(['testClick']);
 
 const isMenuOpen = ref(false);
 
@@ -168,7 +168,7 @@ const toggleMenu = () => {
 };
 
 const handleLogoutClick = () => {
-    emit('handle-logout');
+    emit('testClick');
     toggleMenu();
 };
 

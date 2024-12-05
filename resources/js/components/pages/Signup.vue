@@ -15,16 +15,18 @@
                     v-if="currentComponent"
                     :is="currentComponent"
                     v-bind="componentProps"
+                    @handleEmail="handleEmail"
+                    @handlePhone="handlePhone"
                     @sendErrors="handleErrors"
-                    @success="handleSuccess"
-                    @close="$emit('close')"
-                    @back="step = prev.pop()"
-                    @profileSelect="handleProfileSelect"
+                    @handleSuccess="handleSuccess"
+                    @handleClose="$emit('close')"
+                    @handleBack="handleBack"
+                    @selectProfile="handleSelectProfile"
                     @createNew="handleCreateNew"
                     @showQR="handleShowQR"
-                    @login="handleLogin"
-                    @register="handleRegister"
-                    @reset="resetRegistration"
+                    @handleLogin="handleLogin"
+                    @handleRegister="handleRegister"
+                    @handleReset="resetRegistration"
                 />
             </div>
         </div>
@@ -32,7 +34,7 @@
 </template>
 
 <script setup>
-import {computed, ref, getCurrentInstance, inject} from 'vue';
+import {computed, getCurrentInstance, inject, ref} from 'vue';
 import {useRouter} from 'vue-router';
 import PhoneComponent from "../PhoneComponent.vue";
 import SelectNameComponent from "../SelectNameComponent.vue";
@@ -45,9 +47,10 @@ import SummaryAgreement from "../SummaryAgreement.vue";
 import axios from 'axios';
 import {calculateAge} from '../utils/age.js';
 import EmailComponent from "../EmailComponent.vue";
+import EmailCheckComponent from "../EmailCheckComponent.vue";
 import PasswordComponent from "../PasswordComponent.vue";
 import {trans} from 'laravel-vue-i18n';
-import { notify } from '../utils/notify';
+import {notify} from '../utils/notify';
 
 const app = getCurrentInstance()?.parent;
 const router = useRouter();
@@ -98,17 +101,38 @@ const STEPS = {
     SHOW_QR: 20,        // Oppdatert stegnummer
     TERMS: 15           // Terms & Agreement
 };
-
+const handleBack = (stage) => {
+    if (stage != null) {
+        prev.value = [];
+        step.value = stage;
+    }
+    if (prev.value.length > 0) {
+        prev.value.pop();
+        step.value = prev.value[prev.value.length - 1];
+    }
+}
 // Debug info
 const isDebug = computed(() => import.meta.env.VITE_APP_DEBUG === 'true');
-
 // Computed property for tittel
 const pageTitle = computed(() => {
     return registration.value.isGuardian
         ? 'auth.guardian_title'
         : 'auth.signup_title';
 });
-
+const handleEmail = (email) => {
+    if (registration.value.isGuardian) {
+        step.value = STEPS.GUARDIAN_EMAIL;
+    } else {
+        step.value = STEPS.EMAIL;
+    }
+}
+const handlePhone = (phone) => {
+    if (registration.value.isGuardian) {
+        step.value = STEPS.GUARDIAN_PHONE;
+    } else {
+        step.value = STEPS.PHONE;
+    }
+}
 // Håndterer errors
 const handleErrors = (errors) => {
     registration.value.errors = errors || {};
@@ -117,13 +141,16 @@ const handleErrors = (errors) => {
 // Håndterer suksess fra komponenter
 const handleSuccess = async (data) => {
     console.log('handleSuccess called with:', data);
-    
+
     switch (step.value) {
+        case STEPS.EMAIL:
         case STEPS.PHONE:
             registration.value.data = data.data;
             registration.value.phone = data.phone;  // Lagre telefonnummer
+            registration.value.email = data.email;
             registration.value.selectedProfile = null;  // Reset selectedProfile
-            prev.value = [STEPS.PHONE];
+            prev.value = [step.value];
+
             // Case 3 & 4: Eksisterende brukere funnet
             if (Object.keys(data.data).length > 0) {
                 step.value = STEPS.SELECT_NAME;
@@ -134,13 +161,11 @@ const handleSuccess = async (data) => {
             break;
 
         case STEPS.PASSWORD_CHECK:
-            console.log('Password check success:', data);
-            if (data.password) {
-                registration.value.passwordVerified = true;  // Sjekk at denne blir satt
-                console.log('Password verified:', registration.value.passwordVerified);
-                prev.value.push(step.value);
-                step.value = STEPS.SELECT_CREATION;
-            }
+            console.log('Password check success');
+
+            prev.value.push(step.value);
+            step.value = STEPS.SELECT_CREATION;
+
             break;
 
         case STEPS.NAME:
@@ -151,7 +176,7 @@ const handleSuccess = async (data) => {
         case STEPS.BIRTHDAY:
             registration.value.birthday = data.birthday;
             const age = calculateAge(data.birthday);
-            
+
             if (data.addGuardian || age < 18) {
                 // Hvis brukeren klikket "Legg til foresatt" eller er under 18
                 registration.value.isGuardian = true;
@@ -162,7 +187,6 @@ const handleSuccess = async (data) => {
                 step.value = STEPS.SUMMARY_AGREEMENT;
             }
             break;
-
         case STEPS.SUMMARY_AGREEMENT:
             if (data.agreed) {
                 if (registration.value.newUser) {
@@ -221,10 +245,10 @@ const saveAllData = async () => {
 };
 
 // Håndterer valg av profil (steg 3, 9)
-const handleProfileSelect = (user) => {
+const handleSelectProfile = (user) => {
     console.log('handleProfileSelect called with user:', user);
 
-    registration.value.selectedProfile = user;
+    registration.value.selectedProfile = user; // Sets selected USER profile
 
     prev.value.push(step.value);
 
@@ -243,6 +267,7 @@ const handleProfileSelect = (user) => {
 const handleCreateNew = () => {
     prev.value.push(step.value);
     step.value = STEPS.NAME;
+    registration.value.selectedProfile = null;
 };
 
 // Håndterer registrering fra steg 11
@@ -267,7 +292,7 @@ const handleShowQR = () => {
 // Håndterer innlogging
 const handleLogin = async () => {
     console.log('Attempting login, password verified:', registration.value.passwordVerified);
-    
+
     if (!registration.value.passwordVerified) {
         console.error(trans('auth.error.password_not_verified'));
         return;
@@ -279,26 +304,26 @@ const handleLogin = async () => {
     }
 
     try {
-        const response = await axios.post('/api/users/login', { 
+        const response = await axios.post('/api/users/login', {
             user_id: registration.value.selectedProfile.id
         });
-        
+
         // Sett token først
         if (response.data.token) {
             localStorage.setItem('token', response.data.token);
             axios.defaults.headers.common['Authorization'] = `Bearer ${response.data.token}`;
         }
-        
+
         // Så hent brukerdata
         if (fetchAuthenticatedUser) {
             await fetchAuthenticatedUser();
-            
+
             notify({
                 group: "success",
                 title: "Success",
                 text: trans('auth.login_success')
             });
-            
+
             console.log('Login successful, navigating to dashboard');
             router.push('/dashboard');
         } else {
@@ -306,11 +331,11 @@ const handleLogin = async () => {
         }
     } catch (error) {
         console.error('Login error:', error);
-        
-        registration.value.errors = error.response?.data?.error 
-            ? { general: error.response.data.error }
-            : { general: 'An unknown error occurred' };
-        
+
+        registration.value.errors = error.response?.data?.error
+            ? {general: error.response.data.error}
+            : {general: 'An unknown error occurred'};
+
         notify({
             group: "error",
             title: "Error",
@@ -321,7 +346,7 @@ const handleLogin = async () => {
 
 const currentComponent = computed(() => {
     console.log('Computing component for step:', step.value);
-    
+
     // Sikre at step har en gyldig verdi
     if (!step.value || !Object.values(STEPS).includes(step.value)) {
         console.warn('Invalid step value:', step.value);
@@ -329,6 +354,9 @@ const currentComponent = computed(() => {
     }
 
     switch (step.value) {
+        case STEPS.EMAIL:
+        case STEPS.GUARDIAN_EMAIL:
+            return EmailCheckComponent;
         case STEPS.PHONE:
         case STEPS.GUARDIAN_PHONE:
             return PhoneComponent;
@@ -371,6 +399,8 @@ const componentProps = computed(() => {
 
     const componentSpecificProps = {
         [STEPS.SELECT_NAME]: {
+            phone: registration.value.phone,
+            email: registration.value.email,
             profiles: registration.value.data,
             user: registration.value.selectedProfile
         },
@@ -398,9 +428,7 @@ const componentProps = computed(() => {
         [STEPS.EMAIL_SETUP]: {
             user: registration.value.selectedProfile || registration.value.newUser
         },
-        [STEPS.SET_PASSWORD]: {
-            email: registration.value.email
-        }
+        [STEPS.SET_PASSWORD]: {}
     };
 
     return {
@@ -419,12 +447,12 @@ const activateUser = async (userData) => {
             terms_accepted: userData.terms_accepted,
             is_guardian: userData.is_guardian
         });
-        
+
         await handleLogin({
             email: userData.email,
             password: userData.password
         });
-        
+
         return response.data;
     } catch (error) {
         console.error('Feil ved aktivering/innlogging:', error);
@@ -449,7 +477,7 @@ const encryptPassword = async (password) => {
         // Hent krypteringsnøkkel
         const response = await axios.get('/api/keys/encryption');
         const key = response.data.key;
-        
+
         // Krypter passordet med AES
         return CryptoJS.AES.encrypt(password, key).toString();
     } catch (error) {
@@ -460,13 +488,13 @@ const encryptPassword = async (password) => {
 
 const resetRegistration = () => {
     console.log('Starting reset. Current step:', step.value);
-    
+
     // Sett step først for å unngå undefined state
     step.value = STEPS.PHONE;
-    
+
     // Reset step history
     prev.value = [];
-    
+
     // Reset registration data
     registration.value = {
         errors: {},
@@ -487,7 +515,7 @@ const resetRegistration = () => {
         termsAccepted: false,
         isRegisteringAsGuardian: false,
     };
-    
+
     console.log('Reset complete. New step:', step.value);
 };
 

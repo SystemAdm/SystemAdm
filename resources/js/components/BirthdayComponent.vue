@@ -20,7 +20,7 @@
                 <div>
                     <h3 class="text-sm font-semibold mb-2">PEGI</h3>
                     <div class="flex justify-center">
-                        <PegiComponent 
+                        <PegiComponent
                             :age="calculatedAge"
                             :size="56"
                         />
@@ -31,7 +31,7 @@
                 <div>
                     <h3 class="text-sm font-semibold mb-2">ESRB</h3>
                     <div class="flex justify-center">
-                        <EsrbComponent 
+                        <EsrbComponent
                             :age="calculatedAge"
                             :size="56"
                         />
@@ -72,7 +72,7 @@
                             </p>
                         </div>
                     </div>
-                    <button 
+                    <button
                         @click="addGuardian"
                         class="ml-3 inline-flex items-center px-3 py-2 text-sm font-medium text-blue-600 bg-blue-50 rounded-md hover:bg-blue-100"
                     >
@@ -83,12 +83,12 @@
             </div>
         </div>
 
-        <ButtonBar 
-            :prev="prev" 
-            :next="true"
+        <ButtonBar
+            :prev="prev"
+            :hasNext="true"
             :current-step="currentStep"
-            @close="handleClose" 
-            @go="validateAndContinue" 
+            @close="handleClose"
+            @go="validateAndContinue"
             @back="handleBack"
             @reset="$emit('reset')"
         />
@@ -146,13 +146,13 @@ const updateAge = () => {
 
 const validateAndContinue = () => {
     if (!props.registration.birthday) {
-        emit('sendErrors', { 
-            birthdate: trans('common.validation.birthdate.required') 
+        emit('sendErrors', {
+            birthdate: trans('common.validation.birthdate.required')
         });
         return;
     }
 
-    emit('success', { 
+    emit('success', {
         birthday: props.registration.birthday,
         age: calculatedAge.value
     });
@@ -160,13 +160,13 @@ const validateAndContinue = () => {
 
 const addGuardian = () => {
     if (!props.registration.birthday) {
-        emit('sendErrors', { 
-            birthdate: trans('common.validation.birthdate.required') 
+        emit('sendErrors', {
+            birthdate: trans('common.validation.birthdate.required')
         });
         return;
     }
-    
-    emit('success', { 
+
+    emit('success', {
         birthday: props.registration.birthday,
         age: calculatedAge.value,
         addGuardian: true
