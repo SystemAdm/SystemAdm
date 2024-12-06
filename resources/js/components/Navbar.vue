@@ -7,7 +7,7 @@
 
             <div class="lg:hidden">
                 <button class="navbar-burger text-blue-600 p-3" @click="toggleMenu">
-                    <font-awesome-icon :icon="['fas', 'bars']" />
+                    <font-awesome-icon :icon="['fas', 'bars']"/>
                 </button>
             </div>
         </div>
@@ -28,7 +28,7 @@
         <div v-if="!user" class="hidden lg:flex lg:items-center lg:space-x-3">
             <router-link
                 class="py-2 px-6 bg-gray-50 hover:bg-gray-100 text-sm text-gray-900 font-bold rounded-xl transition duration-200"
-                to="/login">{{ t('auth.sign_in') }}
+                to="/login">{{ trans('auth.sign_in') }}
             </router-link>
         </div>
 
@@ -39,7 +39,7 @@
             <button
                 class="py-2 px-6 bg-gray-50 hover:bg-gray-100 text-sm text-gray-900 font-bold rounded-xl transition duration-200"
                 @click="handleLogoutClick">
-                {{ t('auth.sign_out') }}
+                {{ trans('auth.sign_out') }}
             </button>
         </div>
 
@@ -58,7 +58,8 @@
 
     <div class="navbar-menu relative z-50 bg-black" :class="{ 'hidden': !isMenuOpen }">
         <div class="navbar-backdrop fixed inset-0 bg-black" @click="toggleMenu"></div>
-        <nav class="fixed top-0 left-0 bottom-0 flex flex-col w-4/6 max-w-sm py-6 px-6 bg-black border-r overflow-y-auto text-center">
+        <nav
+            class="fixed top-0 left-0 bottom-0 flex flex-col w-4/6 max-w-sm py-6 px-6 bg-black border-r overflow-y-auto text-center">
             <button class="navbar-close text-red-700 text-xl" @click="toggleMenu">
                 &times;
             </button>
@@ -72,7 +73,7 @@
                 <router-link
                     @click="toggleMenu"
                     class="block mb-3 py-2 px-6 bg-gray-50 hover:bg-gray-100 text-sm text-gray-900 font-bold rounded-xl transition duration-200"
-                    to="/login">{{ t('auth.sign_in') }}
+                    to="/login">{{ trans('auth.sign_in') }}
                 </router-link>
             </div>
 
@@ -83,7 +84,7 @@
                 <button
                     class="block w-full py-2 px-6 bg-gray-50 hover:bg-gray-100 text-sm text-gray-900 font-bold rounded-xl transition duration-200"
                     @click="handleLogoutClick">
-                    {{ t('auth.sign_out') }}
+                    {{ trans('auth.sign_out') }}
                 </button>
             </div>
 
@@ -104,10 +105,9 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue';
-import { notify } from './utils/notify';
-import { trans } from 'laravel-vue-i18n';
-const t = trans;
+import {computed, ref} from 'vue';
+import {trans} from 'laravel-vue-i18n';
+
 const props = defineProps({
     user: {
         type: Object,
@@ -163,13 +163,16 @@ const menu = computed(() => {
     return baseMenu;
 });
 
-const toggleMenu = () => {
+const toggleMenu = (value) => {
+    console.log(value);
+    if (value && isMenuOpen.value === value) return
     isMenuOpen.value = !isMenuOpen.value;
 };
 
 const handleLogoutClick = () => {
+    console.log('click');
     emit('testClick');
-    toggleMenu();
+    toggleMenu(false);
 };
 
 // Hjelpefunksjoner for tillatelser

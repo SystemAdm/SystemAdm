@@ -137,7 +137,7 @@ class User extends Authenticatable
      */
     public function phones(): BelongsToMany
     {
-        return $this->belongsToMany(Phone::class);
+        return $this->belongsToMany(Phone::class)->withPivot('primary','verified_at','verified_by');
     }
 
     /**
@@ -147,7 +147,7 @@ class User extends Authenticatable
      */
     public function emails(): BelongsToMany
     {
-        return $this->belongsToMany(Email::class);
+        return $this->belongsToMany(Email::class)->withPivot('primary','verified_at','verified_by');
     }
 
     /**

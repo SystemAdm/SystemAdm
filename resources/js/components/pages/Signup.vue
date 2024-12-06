@@ -293,11 +293,6 @@ const handleShowQR = () => {
 const handleLogin = async () => {
     console.log('Attempting login, password verified:', registration.value.passwordVerified);
 
-    if (!registration.value.passwordVerified) {
-        console.error(trans('auth.error.password_not_verified'));
-        return;
-    }
-
     if (!registration.value.selectedProfile?.id) {
         console.error(trans('auth.error.no_profile_selected'));
         return;

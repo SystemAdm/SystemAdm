@@ -50,4 +50,8 @@ return [
     'email_confirm_info'=>'Gjenta samme e-postadresse som ovenfor',
     'email_confirm_placeholder' => 'Bekreft e-postadresse',
     'enter_phonenumber' => 'Skriv inn telefonnummer',
+    'set_primary' => 'Sett primær',
+    'primary' => 'Primær',
+    'add_new' => 'Legg til ny',
+    'edit' => 'Rediger',
 ];

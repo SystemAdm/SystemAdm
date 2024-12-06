@@ -100,7 +100,7 @@ const props = defineProps({
     }
 });
 
-const emit = defineEmits(['handleBack', 'showQR', 'handleLogin', 'handleRegister', 'handleReset']);
+const emit = defineEmits(['handleBack', 'showQR', 'handleLogin', 'handleRegister', 'handleReset','handleLogin']);
 
 // Hendelseshåndteringsmetoder
 const handleShowQR = () => emit('showQR');

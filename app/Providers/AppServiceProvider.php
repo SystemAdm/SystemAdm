@@ -3,11 +3,8 @@
 namespace App\Providers;
 
 use App\Models\User;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Gate;
-use Illuminate\Support\Facades\Log;
 use Illuminate\Support\ServiceProvider;
 use Laravel\Cashier\Cashier;
 
@@ -38,11 +35,17 @@ class AppServiceProvider extends ServiceProvider
 
     function setDatabaseConnection(): void
     {
+
         try {
             DB::connection('primary')->getPdo();
             Config::set('database.default', 'mariadb_primary');
         } catch (\Exception $e) {
-            Config::set('database.default', 'mariadb_secondary');
+            try {
+                DB::connection('secondary')->getPdo();
+                Config::set('database.default', 'mariadb_secondary');
+            } catch (\Exception $e) {
+                Config::set('database.default', 'mariadb');
+            }
         }
     }
 }

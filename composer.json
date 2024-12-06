@@ -18,7 +18,8 @@
         "simplesoftwareio/simple-qrcode": "^4.2",
         "spatie/laravel-permission": "^6.9",
         "stripe/stripe-php": "13.8.0",
-        "voku/portable-ascii": "^2.0"
+        "voku/portable-ascii": "^2.0",
+      "ext-pdo": "*"
     },
     "require-dev": {
         "barryvdh/laravel-debugbar": "^3.14",

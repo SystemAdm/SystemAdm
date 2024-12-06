@@ -236,11 +236,6 @@ class UsersController extends Controller
         return response()->json(0);
     }
 
-    public function me(Request $request)
-    {
-        return User::with('phones','emails')->find($request->user()->id);
-    }
-
     public function qr(User $user)
     {
         $qrCode = $user->generateQrCode();
@@ -303,11 +298,11 @@ class UsersController extends Controller
     /**
      * Get the authenticated user with permissions
      *
-     * @return \Illuminate\Http\JsonResponse
+     * @return JsonResponse
      */
     public function user(Request $request)
     {
-        $user = $request->user();
+        $user = User::with('profile.postal','phones','emails')->find($request->user()->id);
 
         if (!$user) {
             return response()->json(null);
@@ -327,40 +322,55 @@ class UsersController extends Controller
      * Logout the user and invalidate their token
      *
      * @param Request $request
-     * @return \Illuminate\Http\JsonResponse
+     * @return JsonResponse
      */
     public function logout(Request $request)
     {
         try {
-            Log::info('has token and user');
-            // Slett brukerens nåværende token
-            if ($request->user() && $request->user()->currentAccessToken()) {
-                $request->user()->currentAccessToken()->delete();
+            $sessionData = $request->session()->all();
+            Log::info('Session data acquired successfully.', $sessionData);
+
+            foreach ($sessionData as $key => $value) {
+                if (!is_string($key) && !is_int($key)) {
+                    Log::warning('Invalid session key type detected:', ['key' => $key]);
+                }
             }
-            Log::info('has user');
-            // Logg ut brukeren
+        } catch (\Throwable $e) {
+            Log::error('Error obtaining session data: ' . $e->getMessage());
+        }
+        try {
+            if ($user = $request->user()) {
+                $accessToken = $user->currentAccessToken();
+                if ($accessToken) {
+                    Log::info('Deleting user token for user_id: ' . $user->id);
+                    $accessToken->delete();
+                } else {
+                    Log::info('No active access token found for user_id: ' . $user->id);
+                }
+            } else {
+                Log::info('Request contained no authenticated user');
+            }
+
             Auth::guard('web')->logout();
 
-            Log::info('has none');
-
             if ($request->hasSession()) {
-                // Invalider sesjonen
-                if (!$request->session()->isStarted()) {
-                    $request->session()->start();
+                $session = $request->session();
+                if (!$session->isStarted()) {
+                    $session->start();
                 }
-                Log::info('Session initiated:', ['isStarted' => $request->session()->isStarted()]);
-                $request->session()->invalidate();
-                Log::info('invalidated');
-                $request->session()->regenerateToken();
-                Log::info('regenerated');
+                Log::info('Invalidating session for user_id: ', ['user_id' => $user->id ?? 'unknown']);
+                $session->invalidate();
+                $session->regenerateToken();
+                Log::info('Session token regenerated for user_id: ', ['user_id' => $user->id ?? 'unknown']);
             }
+
             return response()->json([
                 'success' => true,
                 'message' => 'Successfully logged out'
             ]);
         } catch (\Exception $e) {
             Log::error('Logout error: ' . $e->getMessage(), [
-                'user_id' => optional($request->user())->id,
+                'user_id' => $request->user()->id ?? 'unknown',
                 'exception' => $e
             ]);
 

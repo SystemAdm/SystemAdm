@@ -18,17 +18,17 @@ import {
     faEye,
     faEyeSlash,
     faIdCard,
-    faInfoCircle,
+    faInfoCircle, faLink,
     faLock,
     faMagnifyingGlass,
-    faMapMarker,
+    faMapMarker, faPencil,
     faPeoplePulling,
     faPhone,
     faPlus,
     faQrcode,
     faRightToBracket,
     faRotateLeft,
-    faShield, faTrash,
+    faShield, faStamp, faStar, faTrash,
     faTrashCan,
     faTrashCanArrowUp,
     faTriangleExclamation,
@@ -36,8 +36,9 @@ import {
     faUserPlus,
     faXmark,
 } from '@fortawesome/free-solid-svg-icons'
+import { faStar as faRegularStar } from '@fortawesome/free-regular-svg-icons';
 
-library.add(faUser, faMagnifyingGlass, faEnvelope, faPhone, faMapMarker, faShield, faQrcode, faIdCard, faBars, faTrashCan, faArrowRight, faArrowLeft, faLock, faClock, faCheck, faTrashCanArrowUp, faXmark, faPeoplePulling, faUserPlus, faEye, faEyeSlash, faRightToBracket, faRotateLeft, faInfoCircle, faPlus, faTriangleExclamation,faTrash);
+library.add(faUser, faMagnifyingGlass, faEnvelope, faPhone, faMapMarker, faShield, faQrcode, faIdCard, faBars, faTrashCan, faArrowRight, faArrowLeft, faLock, faClock, faCheck, faTrashCanArrowUp, faXmark, faPeoplePulling, faUserPlus, faEye, faEyeSlash, faRightToBracket, faRotateLeft, faInfoCircle, faPlus, faTriangleExclamation,faTrash,faPencil,faStar,faStamp,faRegularStar,faLink);
 axios.defaults.withCredentials = true;
 
 // Define routes

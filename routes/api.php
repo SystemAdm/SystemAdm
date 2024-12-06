@@ -3,12 +3,13 @@
 use App\Http\Controllers\Api\EventsController;
 use App\Http\Controllers\Api\LocationsController;
 use App\Http\Controllers\Api\MembershipsController;
+use App\Http\Controllers\Api\PhonesController;
 use App\Http\Controllers\Api\UsersController;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
-Route::middleware(['api', 'session'])->post('/logout', [UsersController::class, 'logout']);
+Route::post('/logout', [UsersController::class, 'logout']);
 // Auth routes
 Route::middleware('auth:sanctum')->group(function () {
     Route::get('/user', [UsersController::class, 'user']);
@@ -33,7 +34,6 @@ Route::apiResource('locations', LocationsController::class)->only(['index', 'sho
 // Users routes || not logged in
 Route::prefix('users')->group(function () {
     Route::middleware('auth:sanctum')->group(function () {
-        Route::get('/me', [UsersController::class, 'me']);
         Route::get('/{id}/qr', [UsersController::class, 'qr']);
     });
     Route::get('/{id}/qr', [UsersController::class, 'qr']);
@@ -45,6 +45,8 @@ Route::prefix('users')->group(function () {
     Route::get('/{user}', [UsersController::class, 'show']);
     Route::post('/', [UsersController::class, 'store']);
 });
+
+Route::post('/phones/{phone}/setPrimary', [PhonesController::class, 'setPrimary']);
 
 // Memberships routes
 Route::prefix('memberships')->group(function () {
