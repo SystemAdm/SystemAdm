@@ -71,7 +71,7 @@ class UsersController extends Controller
             'family_name' => ['required', 'string', 'min:2', 'max:32'],
             'phone' => ['required_without:email', 'nullable', 'string'],
             'email' => ['required_without:phone', 'nullable', 'email'],
-            'birthday' => ['nullable','date']
+            'birthday' => ['nullable', 'date']
         ]);
 
         try {
@@ -201,11 +201,8 @@ class UsersController extends Controller
         $validated = $request->validate(['phone' => 'required']);
         $parsed = $this->phoneUtil->parse($validated['phone'], 'NO');
         if ($this->phoneUtil->isValidNumber($parsed)) {
-            $phone = Phone::with('users', 'users.profile.postal', 'users.guardians', 'users.children')->where('number', $parsed->getNationalNumber())->where('country', $parsed->getCountryCode())->first();
-            if ($phone && $phone->users->count() > 0) {
-                return response()->json($phone->users->keyBy('id'));
-            }
-            return response()->json(1);
+            $phone = Phone::with('user', 'user.profile.postal', 'user.guardians', 'user.children')->where('number', $parsed->getNationalNumber())->where('country', $parsed->getCountryCode())->first();
+            return response()->json($phone->user != null ? $phone : 1);
         }
         return response()->json(0);
     }
@@ -302,7 +299,7 @@ class UsersController extends Controller
      */
     public function user(Request $request)
     {
-        $user = User::with('profile.postal','phones','emails')->find($request->user()->id);
+        $user = User::with('profile.postal', 'phones', 'emails')->find($request->user()->id);
 
         if (!$user) {
             return response()->json(null);

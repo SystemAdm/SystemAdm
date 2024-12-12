@@ -9,6 +9,9 @@ use Illuminate\Support\Facades\Route;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
+Route::get('/authorize/{provider}/redirect',[\App\Http\Controllers\Api\SocialAuthController::class, 'redirectToProvider']);
+Route::get('/authorize/{provider}/callback',[\App\Http\Controllers\Api\SocialAuthController::class, 'handleProviderCallback']);
+
 Route::post('/logout', [UsersController::class, 'logout']);
 // Auth routes
 Route::middleware('auth:sanctum')->group(function () {

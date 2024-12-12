@@ -24,6 +24,7 @@
         "@fortawesome/vue-fontawesome": "^3.0.8",
         "@kyvg/vue3-notification": "^3.4.1",
         "@stripe/stripe-js": "^4.9.0",
+        "@vippsmobilepay/sdk": "^2.4.2",
         "@vue-stripe/vue-stripe": "^4.5.0",
         "crypto-js": "^4.2.0",
         "date-fns": "^4.1.0",
@@ -32,6 +33,7 @@
         "luxon": "^3.5.0",
         "notiwind": "^2.0.2",
         "toastr": "^2.1.4",
+        "twilio": "^5.3.7",
         "vue-router": "^4.4.5",
         "vue-toast-notification": "^3.1.3"
     }

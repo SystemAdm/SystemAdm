@@ -115,7 +115,6 @@ const clearUserSession = () => {
     localStorage.removeItem('user');
     localStorage.removeItem('token');
     delete axios.defaults.headers.common['Authorization'];
-    // Nullstill Laravel objekt
     window.Laravel.permissions = [];
     window.Laravel.roles = [];
 

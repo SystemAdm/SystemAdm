@@ -18,17 +18,22 @@ import {
     faEye,
     faEyeSlash,
     faIdCard,
-    faInfoCircle, faLink,
+    faInfoCircle,
+    faLink,
     faLock,
     faMagnifyingGlass,
-    faMapMarker, faPencil,
+    faMapMarker,
+    faPencil,
     faPeoplePulling,
     faPhone,
     faPlus,
     faQrcode,
     faRightToBracket,
     faRotateLeft,
-    faShield, faStamp, faStar, faTrash,
+    faShield,
+    faStamp,
+    faStar,
+    faTrash,
     faTrashCan,
     faTrashCanArrowUp,
     faTriangleExclamation,
@@ -36,15 +41,20 @@ import {
     faUserPlus,
     faXmark,
 } from '@fortawesome/free-solid-svg-icons'
-import { faStar as faRegularStar } from '@fortawesome/free-regular-svg-icons';
+import {faStar as faRegularStar} from '@fortawesome/free-regular-svg-icons';
+import {faGithub, faGoogle} from "@fortawesome/free-brands-svg-icons";
 
-library.add(faUser, faMagnifyingGlass, faEnvelope, faPhone, faMapMarker, faShield, faQrcode, faIdCard, faBars, faTrashCan, faArrowRight, faArrowLeft, faLock, faClock, faCheck, faTrashCanArrowUp, faXmark, faPeoplePulling, faUserPlus, faEye, faEyeSlash, faRightToBracket, faRotateLeft, faInfoCircle, faPlus, faTriangleExclamation,faTrash,faPencil,faStar,faStamp,faRegularStar,faLink);
+library.add(faUser, faMagnifyingGlass, faEnvelope, faPhone, faMapMarker, faShield, faQrcode, faIdCard, faBars, faTrashCan, faArrowRight, faArrowLeft, faLock, faClock, faCheck, faTrashCanArrowUp, faXmark, faPeoplePulling, faUserPlus, faEye, faEyeSlash, faRightToBracket, faRotateLeft, faInfoCircle, faPlus, faTriangleExclamation, faTrash, faPencil, faStar, faStamp, faRegularStar, faLink, faGoogle, faGithub);
 axios.defaults.withCredentials = true;
 
 // Define routes
 const routes = [
+    // ADMIN
+    {name: 'AdminRules', path: '/admins/rules', component: () => import('./components/admin/pages/RulesIndex.vue')},
+    {name: 'AdminEvents', path: '/admins/events', component: () => import('./components/admin/pages/EventsIndex.vue')},
+    // USER
     {name: 'Dashboard', path: '/dashboard', component: () => import('./components/pages/Dashboard.vue')},
-    {name: 'AdminRules', path: '/admin/rules', component: () => import('./components/admin/pages/RulesIndex.vue')},
+    {name: 'Provider',path: '/authorize/:provider/callback', component: () => import('./components/Provider.vue')},
     {name: 'RulesIndex', path: '/rules', component: () => import('./components/pages/RulesIndex.vue')},
     {name: 'Membership', path: '/member', component: () => import('./components/pages/Membership.vue')},
     {name: 'Index', path: '/', component: () => import('./components/pages/Home.vue')}, // Home should be loaded on the root route
@@ -53,11 +63,6 @@ const routes = [
     {name: 'MyProfile', path: '/profiles/me', component: () => import('./components/pages/MyProfile.vue')},
     {name: 'ProfilesIndex', path: '/profiles', component: () => import('./components/pages/ProfilesIndex.vue')},
     {name: 'ProfilesShow', path: '/profiles/:user', component: () => import('./components/pages/ProfilesShow.vue')},
-    {
-        name: 'AdminEvents',
-        path: '/admins/events',
-        component: () => import('./components/admin/pages/EventsIndex.vue'),
-    },
 ];
 
 // Create router

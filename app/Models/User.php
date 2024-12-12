@@ -200,6 +200,11 @@ class User extends Authenticatable
         return $this->belongsToMany(User::class, 'guardians', 'guardian_id', 'user_id');
     }
 
+    public function socialAccounts()
+    {
+        return $this->hasMany(SocialAccounts::class);
+    }
+
     /**
      * Get the user's highest ranked role
      *

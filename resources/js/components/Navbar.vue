@@ -26,10 +26,10 @@
         </ul>
 
         <div v-if="!user" class="hidden lg:flex lg:items-center lg:space-x-3">
-            <router-link
+            <button
                 class="py-2 px-6 bg-gray-50 hover:bg-gray-100 text-sm text-gray-900 font-bold rounded-xl transition duration-200"
-                to="/login">{{ trans('auth.sign_in') }}
-            </router-link>
+                @click="handleLogin">{{ trans('auth.sign_in') }}
+            </button>
         </div>
 
         <div v-else class="hidden lg:flex lg:items-center">
@@ -70,11 +70,10 @@
             </div>
 
             <div v-if="!user" class="mb-5">
-                <router-link
-                    @click="toggleMenu"
-                    class="block mb-3 py-2 px-6 bg-gray-50 hover:bg-gray-100 text-sm text-gray-900 font-bold rounded-xl transition duration-200"
-                    to="/login">{{ trans('auth.sign_in') }}
-                </router-link>
+                <button
+                    @click="handleLogin"
+                    class="block mb-3 py-2 px-6 bg-gray-50 hover:bg-gray-100 text-sm text-gray-900 font-bold rounded-xl transition duration-200">{{ trans('auth.sign_in') }}
+                </button>
             </div>
 
             <div v-else class="mb-5">
@@ -102,11 +101,13 @@
             </ul>
         </nav>
     </div>
+    <Signup :open="frameOpen" @handleClose="frameOpen = false"></Signup>
 </template>
 
 <script setup>
 import {computed, ref} from 'vue';
 import {trans} from 'laravel-vue-i18n';
+import Signup from "./pages/Signup.vue";
 
 const props = defineProps({
     user: {
@@ -117,9 +118,11 @@ const props = defineProps({
 
 // Definer emits
 const emit = defineEmits(['testClick']);
-
+const frameOpen = ref(false);
 const isMenuOpen = ref(false);
-
+const handleLogin = () => {
+    frameOpen.value = true;
+}
 const menu = computed(() => {
     if (!props.user) return {
         main: {

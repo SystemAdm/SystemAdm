@@ -43,6 +43,7 @@ import {computed, ref} from 'vue';
 import axios from "axios";
 import {trans} from 'laravel-vue-i18n'
 import PhoneInput from "./fields/PhoneInput.vue";
+import { Client } from "@vippsmobilepay/sdk";
 
 const props = defineProps({
     hasErrors: {

@@ -12,7 +12,7 @@ return [
     'success' => [
         'phone_verified' => 'Telefonnummer bekreftet'
     ],
-    'create_new_user' => 'Tilknytt bytt navn',
+    'create_new_user' => 'Tilknytt nytt navn',
     'current_step' => 'Nåværende steg',
     'signup_title' => 'Registrer ny bruker',
     'password' => 'Passord',
@@ -39,4 +39,5 @@ return [
     'password_info' => 'Denne kontoen er låst med passord',
     'password_required' => 'Passord er nødvendig',
     'password_incorrect' => 'Feil passord',
+    'email_label' => 'E-postadresse',
 ];
