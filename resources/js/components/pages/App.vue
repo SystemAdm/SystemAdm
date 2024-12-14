@@ -3,7 +3,7 @@
     <div class="w-full">
         <Navbar :user="user" @testClick="handleLogout" />
         <div class="py-5">
-            <router-view :me="user" @update="update"/>
+            <router-view :me="user" @update="update" />
         </div>
 
         <NotificationGroup v-for="type in notificationTypes" :key="type" :group="type">

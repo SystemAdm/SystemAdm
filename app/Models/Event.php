@@ -79,7 +79,7 @@ class Event extends Model
     /**
      * Get the location associated with the event
      *
-     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo<Location>
+     * @return BelongsTo<Location>
      */
     public function location(): BelongsTo
     {
@@ -89,7 +89,7 @@ class Event extends Model
     /**
      * Get users registered for the event
      *
-     * @return \Illuminate\Database\Eloquent\Relations\BelongsToMany<User>
+     * @return BelongsToMany<User>
      */
     public function registered(): BelongsToMany
     {
@@ -99,7 +99,7 @@ class Event extends Model
     /**
      * Get crew members registered for the event
      *
-     * @return \Illuminate\Database\Eloquent\Relations\BelongsToMany<User>
+     * @return BelongsToMany<User>
      */
     public function registeredCrew(): BelongsToMany
     {
@@ -109,7 +109,7 @@ class Event extends Model
     /**
      * Get users attending the event
      *
-     * @return \Illuminate\Database\Eloquent\Relations\BelongsToMany<User>
+     * @return BelongsToMany<User>
      */
     public function attending(): BelongsToMany
     {
@@ -119,7 +119,7 @@ class Event extends Model
     /**
      * Get crew members attending the event
      *
-     * @return \Illuminate\Database\Eloquent\Relations\BelongsToMany<User>
+     * @return BelongsToMany<User>
      */
     public function attendingCrew(): BelongsToMany
     {
@@ -129,7 +129,7 @@ class Event extends Model
     /**
      * Get insider users for the event
      *
-     * @return \Illuminate\Database\Eloquent\Relations\BelongsToMany<User>
+     * @return BelongsToMany<User>
      */
     public function insider(): BelongsToMany
     {
@@ -139,7 +139,7 @@ class Event extends Model
     /**
      * Get insider crew members for the event
      *
-     * @return \Illuminate\Database\Eloquent\Relations\BelongsToMany<User>
+     * @return BelongsToMany<User>
      */
     public function insiderCrew(): BelongsToMany
     {

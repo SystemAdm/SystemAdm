@@ -31,8 +31,8 @@
 </template>
 
 <script setup>
-import { computed } from 'vue';
-import { useRouter } from 'vue-router';
+import {computed} from 'vue';
+import {useRouter} from 'vue-router';
 import {trans} from "laravel-vue-i18n";
 
 const router = useRouter();
@@ -70,7 +70,7 @@ const baseButtonClass = `
 
 const handleReset = () => {
     if (props.currentStep === 1 || props.currentStep === 2) {
-        router.push({ name: 'Index' });
+        router.push({name: 'Index'});
     } else {
         emit('handleBack', 1);
     }
@@ -78,7 +78,7 @@ const handleReset = () => {
 
 const handleClose = () => {
     if (props.currentStep === 1 || props.currentStep === 2) {
-        router.push({ name: 'Index' });
+        router.push({name: 'Index'});
     }
 };
 
