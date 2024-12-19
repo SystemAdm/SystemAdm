@@ -2,7 +2,6 @@
 import {createApp} from 'vue';
 import {createRouter, createWebHistory} from 'vue-router';
 import App from './components/pages/App.vue';
-import Notifications from 'notiwind'
 import LaravelPermissionToVueJS from 'laravel-permission-to-vuejs'
 import axios from "axios";
 import {FontAwesomeIcon} from "@fortawesome/vue-fontawesome";
@@ -49,27 +48,21 @@ axios.defaults.withCredentials = true;
 
 // Define routes
 const routes = [
-    // ADMIN
-    {name: 'AdminRules', path: '/admins/rules', component: () => import('./components/admin/pages/RulesIndex.vue')},
-    {name: 'AdminEvents', path: '/admins/events', component: () => import('./components/admin/pages/EventsIndex.vue')},
-    // USER
-    {name: 'Dashboard', path: '/dashboard', component: () => import('./components/pages/Dashboard.vue')},
-    {name: 'Provider',path: '/authorize/:provider/callback', component: () => import('./components/Provider.vue')},
-    {name: 'RulesIndex', path: '/rules', component: () => import('./components/pages/RulesIndex.vue')},
-    {name: 'Membership', path: '/member', component: () => import('./components/pages/Membership.vue')},
-    {name: 'Index', path: '/', component: () => import('./components/pages/Home.vue')}, // Home should be loaded on the root route
-    {name: 'EventsIndex', path: '/events', component: () => import('./components/pages/EventsIndex.vue')},
-    {name: 'WhoAmI?', path: '/login', component: () => import( './components/pages/Signup.vue')},
-    {name: 'MyProfile', path: '/profiles/me', component: () => import('./components/pages/MyProfile.vue')},
-    {name: 'ProfilesIndex', path: '/profiles', component: () => import('./components/pages/ProfilesIndex.vue')},
-    {name: 'ProfilesShow', path: '/profiles/:user', component: () => import('./components/pages/ProfilesShow.vue')},
+    {
+        path: '/signin',
+        name: 'SignIn',
+        component: () => import('./components/pages/SignIn.vue'), // Lazy load
+    },
+    {
+        path: '/register',
+        name: 'Register',
+        component: () => import('./components/pages/Register.vue'), // Lazy load
+    }
 ];
 
 // Create router
 const router = createRouter({
     history: createWebHistory(),
-    linkActiveClass: 'border-indigo-500',
-    linkExactActiveClass: 'border-indigo-700',
     routes,
 });
 
@@ -84,7 +77,6 @@ const app = createApp(App)
         }
     })
     .use(router)
-    .use(Notifications)
     .use(LaravelPermissionToVueJS);
 
 app.mount('#app');

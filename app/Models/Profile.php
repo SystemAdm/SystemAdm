@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Carbon\Carbon;
+use Exception;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
@@ -12,63 +13,39 @@ class Profile extends Model
     protected $appends = ['pegi', 'esrb', 'age', 'image'];
     protected $hidden = ['citizen', 'bank_account'];
 
-    public function getImageAttribute()
+    public function getImageAttribute(): string
     {
-        if ($this->avatar == null) {
-            return asset('images/silhouette.png');
-        } else {
-            return asset($this->avatar);
+        return asset($this->avatar ?? 'images/silhouette.png');
+    }
+
+    private function getAgeBasedImage(array $ratings): string
+    {
+        foreach ($ratings as $age => $image) {
+            if ($this->age >= $age) {
+                return asset($image);
+            }
         }
+        return asset(end($ratings)); // Default bildestien
     }
 
     public function getPegiAttribute(): string
     {
-
-        if ($this->age >= 18) {
-            return asset('images/pegi/age-18.jpg');
-        }
-        if ($this->age >= 16) {
-            return asset('images/pegi/age-16.jpg');
-        }
-        if ($this->age >= 12) {
-            return asset('images/pegi/age-12.jpg');
-        }
-        if ($this->age >= 7) {
-            return asset('images/pegi/age-7.jpg');
-        } else {
-            return asset('images/pegi/age-3.jpg');
-        }
-
+        return $this->getAgeBasedImage(config('profile.pegi'));
     }
 
-    public function getEsrbAttribute()
+    public function getEsrbAttribute(): string
     {
-        if ($this->age >= 18) {
-            return asset('images/esrb/AO.svg');
-        }
-        if ($this->age >= 17) {
-            return asset('images/esrb/M.svg');
-        }
-        if ($this->age >= 13) {
-            return asset('images/esrb/T.svg');
-        }
-        if ($this->age >= 10) {
-            return asset('images/esrb/E10plus.svg');
-        } else {
-            return asset('images/esrb/E.svg');
-        }
-
+        return $this->getAgeBasedImage(config('profile.esrb'));
     }
 
-    public function getAgeAttribute(): int
+    public function getAgeAttribute(): ?int
     {
-        if ($this->birthday != null) {
-            return Carbon::parse($this->birthday)->age;
-        } else {
-            return 3;
+        try {
+            return $this->birthday ? Carbon::parse($this->birthday)->age : null;
+        } catch (Exception $e) {
+            return null;
         }
     }
-
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);

@@ -2,8 +2,8 @@
 
 namespace App\Models;
 
+use Attribute;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
@@ -28,7 +28,9 @@ class Email extends Model
      */
     public function users(): BelongsToMany
     {
-        return $this->belongsToMany(User::class);
+        return $this->belongsToMany(User::class)
+            ->withPivot('primary', 'verified_at', 'verified_by')
+            ->withTimestamps();
     }
 
     /**
@@ -38,7 +40,14 @@ class Email extends Model
      */
     public function getFullEmailAttribute(): string
     {
-        return "{$this->name}@{$this->domain}.{$this->tld}";
+        return strtolower("{$this->name}@{$this->domain}.{$this->tld}");
+    }
+
+    protected function name(): Attribute
+    {
+        return Attribute::make(
+            set: fn(string $value) => strtolower(trim($value))
+        );
     }
 
 }

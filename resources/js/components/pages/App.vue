@@ -1,12 +1,15 @@
 <!-- App.vue -->
 <template>
-    <div class="w-full">
-        <Navbar :user="user" @testClick="handleLogout" />
+    <div class="w-full relative">
+        <div v-if="loading" class="absolute inset-0 flex items-center justify-center bg-gray-100 bg-opacity-75 z-50">
+            <div class="loader"></div>
+        </div>
+        <Navbar :user="user" @handleLogout="handleLogout"/>
         <div class="py-5">
-            <router-view :me="user" @update="update" />
+            <router-view :me="user" @update="update"/>
         </div>
 
-        <NotificationGroup v-for="type in notificationTypes" :key="type" :group="type">
+        <NotificationGroup v-for="type in notificationTypes" :key="type" :group="type" v-show="!loading">
             <div class="fixed inset-0 flex items-start justify-end p-6 px-4 py-6 pointer-events-none">
                 <div class="w-full max-w-sm">
                     <Notification
@@ -33,7 +36,9 @@
                             <div class="px-4 py-2 -mx-3">
                                 <div class="mx-3">
                                     <span class="font-semibold" :class="textColorClass[type]">
-                                        {{ notification.title }}{{ type === 'generic' || type === 'success' ? 'Info' : '' }}
+                                        {{
+                                            notification.title
+                                        }}{{ type === 'generic' || type === 'success' ? 'Info' : '' }}
                                     </span>
                                     <p class="text-sm text-gray-600">{{ notification.text }}</p>
                                 </div>
@@ -47,12 +52,11 @@
 </template>
 
 <script setup>
-import { ref, onMounted, watch, provide } from 'vue';
+import {onMounted, provide, ref, watch} from 'vue';
 import axios from "axios";
 import Navbar from '../Navbar.vue';
-import { Notification, NotificationGroup } from "notiwind";
-import { useRouter } from 'vue-router';
-import { notify } from '../utils/notify';
+import {Notification, NotificationGroup, notify} from "notiwind";
+import {useRouter as $router} from "vue-router";
 
 // Initialiser window.Laravel hvis det ikke eksisterer
 window.Laravel = window.Laravel || {
@@ -62,7 +66,8 @@ window.Laravel = window.Laravel || {
 
 const user = ref(null);
 const loading = ref(false);
-
+const loaderClass = "loader"; // Define spinner style if needed
+const emits = defineEmits(['update']);
 const notificationTypes = ['error', 'generic', 'success'];
 
 const bgColorClass = {
@@ -85,9 +90,8 @@ const iconPath = {
     success: 'M20 3.33331C10.8 3.33331 3.33337 10.8 3.33337 20C3.33337 29.2 10.8 36.6666 20 36.6666C29.2 36.6666 36.6667 29.2 36.6667 20C36.6667 10.8 29.2 3.33331 20 3.33331ZM21.6667 28.3333H18.3334V25H21.6667V28.3333ZM21.6667 21.6666H18.3334V11.6666H21.6667V21.6666Z'
 };
 
-const router = useRouter();
-
 const fetchAuthenticatedUser = async () => {
+    loading.value = true;
     try {
         const response = await axios.get('/api/user');
         user.value = response.data;
@@ -106,6 +110,8 @@ const fetchAuthenticatedUser = async () => {
             console.error('Error fetching user:', error);
         }
         return null;
+    } finally {
+        loading.value = false;
     }
 };
 
@@ -131,7 +137,7 @@ const handleLogout = async () => {
         await axios.post('/api/logout');
 
         clearUserSession();
-        router.push('/');
+        $router.push('/');
     } catch (error) {
         console.error('Logout failed:', error);
         notify({
@@ -144,12 +150,16 @@ const handleLogout = async () => {
 
 // Kjør ved oppstart
 onMounted(async () => {
+    loading.value = true;
     console.log('App mounted, checking authentication');
     const token = localStorage.getItem('token');
     if (token) {
         axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
         await fetchAuthenticatedUser();
+    } else {
+        loading.value = false;
     }
+    loading.value = false;
 });
 
 // Provide nødvendige funksjoner

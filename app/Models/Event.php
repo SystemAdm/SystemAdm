@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Http\Response;
 use Illuminate\Support\Carbon;
 
 class Event extends Model
@@ -21,7 +22,7 @@ class Event extends Model
         'attending',
         'registration_needed',
         'image',
-        'location_id'
+        'location_id',
     ];
 
     protected $casts = [
@@ -58,7 +59,7 @@ class Event extends Model
         'Thu' => 'Tor.',
         'Fri' => 'Fre.',
         'Sat' => 'Lør.',
-        'Sun' => 'Søn.'
+        'Sun' => 'Søn.',
     ];
 
     private const MONTHS = [
@@ -73,7 +74,7 @@ class Event extends Model
         'Sep' => 'Sep.',
         'Oct' => 'Okt.',
         'Nov' => 'Nov.',
-        'Dec' => 'Des.'
+        'Dec' => 'Des.',
     ];
 
     /**
@@ -83,7 +84,7 @@ class Event extends Model
      */
     public function location(): BelongsTo
     {
-        return $this->belongsTo(Location::class);
+        return $this->belongsTo(Location::class, 'location_id');
     }
 
     /**
@@ -146,20 +147,19 @@ class Event extends Model
         return $this->belongsToMany(User::class, 'event_inside_crew')->withTimestamps();
     }
 
-    private function formatDate(?string $date): string
+    private function formatDate(?Carbon $date): string
     {
-        if ($date === null) {
+        if (!$date) {
             return '';
         }
 
-        $carbon = new Carbon($date);
-        $string = $carbon->format('D d M Y H:i');
-        $string = strtr($string, self::DAYS);
-        return ucfirst(strtolower(strtr($string, self::MONTHS)));
+        $formatted = $date->format('D d M Y H:i');
+        $formatted = strtr($formatted, self::DAYS);
+        return ucfirst(strtolower(strtr($formatted, self::MONTHS)));
     }
 
     /**
-     * Get formatted event begin date
+     * Hent formattert startdato for arrangementet.
      */
     public function getEventBeginDateAttribute(): string
     {
@@ -167,7 +167,7 @@ class Event extends Model
     }
 
     /**
-     * Get formatted event end date
+     * Hent formattert sluttdato for arrangementet.
      */
     public function getEventEndDateAttribute(): string
     {
@@ -175,7 +175,7 @@ class Event extends Model
     }
 
     /**
-     * Get formatted signup begin date
+     * Hent formattert registreringsstart-dato.
      */
     public function getSignupBeginDateAttribute(): string
     {
@@ -183,7 +183,7 @@ class Event extends Model
     }
 
     /**
-     * Get formatted signup end date
+     * Hent formattert registreringsslutt-dato.
      */
     public function getSignupEndDateAttribute(): string
     {
@@ -191,110 +191,116 @@ class Event extends Model
     }
 
     /**
-     * Check if signup period has started
+     * Sjekk om registreringsperioden har startet.
      */
     public function getSignupBeganAttribute(): bool
     {
-        return Carbon::parse($this->signup_begin)->isPast();
+        return optional($this->signup_begin)->isPast() ?? false;
     }
 
     /**
-     * Check if signup period has ended
+     * Sjekk om registreringsperioden har sluttet.
      */
     public function getSignupEndedAttribute(): bool
     {
-        return Carbon::parse($this->signup_end)->isPast();
+        return optional($this->signup_end)->isPast() ?? false;
     }
 
     /**
-     * Check if event has started
+     * Sjekk om arrangementet har startet.
      */
     public function getEventBeganAttribute(): bool
     {
-        return Carbon::parse($this->event_begin)->isPast()
-            && Carbon::parse($this->event_end)->isFuture();
+        return optional($this->event_begin)->isPast() && optional($this->event_end)->isFuture();
     }
 
     /**
-     * Check if event has ended
+     * Sjekk om arrangementet har sluttet.
      */
     public function getEventEndedAttribute(): bool
     {
-        return Carbon::parse($this->event_end)->isPast();
+        return optional($this->event_end)->isPast() ?? false;
     }
 
     /**
-     * Get number of available seats
-     * Returns false if unlimited seats (-1)
-     * Returns true if no seats (0)
-     * Returns number of remaining seats otherwise
+     * Hent antall tilgjengelige seter.
+     *
+     * @return bool|int False hvis ubegrenset, true hvis ingen seter, eller antall ellers.
      */
     public function getSeatsAvailableAttribute(): bool|int
     {
-        if ($this->seats === -1) return false;
-        if ($this->seats === 0) return true;
+        if ($this->seats === -1) {
+            return false; // Ubegrenset seter
+        }
+
+        if ($this->seats === 0) {
+            return true; // Ingen seter tilgjengelig
+        }
+
         return $this->seats - $this->registered->count();
     }
 
     /**
-     * Get event duration in days
+     * Hent arrangementets varighet i dager.
      */
     public function getDurationDaysAttribute(): int
     {
-        return (int)round(Carbon::parse($this->event_begin)
-            ->diffInDays(Carbon::parse($this->event_end), false));
+        return optional($this->event_begin)
+            ->diffInDays(optional($this->event_end), false) ?? 0;
     }
 
     /**
-     * Get event duration in hours
+     * Hent arrangementets varighet i timer.
      */
     public function getDurationHoursAttribute(): int
     {
-        return (int)round(Carbon::parse($this->event_begin)
-            ->diffInHours(Carbon::parse($this->event_end), false));
-    }
-
-    public function getEventDateAttribute(): string
-    {
-        $carbon = new Carbon($this->event_begin);
-        $string = $carbon->format('D d M Y');
-        $string = strtr($string, self::DAYS);
-        return ucfirst(strtolower(strtr($string, self::MONTHS)));
+        return optional($this->event_begin)
+            ->diffInHours(optional($this->event_end), false) ?? 0;
     }
 
     /**
-     * Get event start time in H:i format
+     * Hent formatert dato for arrangementet.
+     */
+    public function getEventDateAttribute(): string
+    {
+        return $this->formatDate($this->event_begin);
+    }
+
+    /**
+     * Hent starttid for arrangementet i H:i-format.
      */
     public function getEventTimeStartAttribute(): string
     {
-        return Carbon::parse($this->event_begin)->format('H:i');
+        return optional($this->event_begin)->format('H:i') ?? '';
     }
 
     /**
-     * Get event end time in H:i format
+     * Hent slutttid for arrangementet i H:i-format.
      */
     public function getEventTimeEndAttribute(): string
     {
-        return Carbon::parse($this->event_end)->format('H:i');
+        return optional($this->event_end)->format('H:i') ?? '';
     }
 
     /**
-     * Get event images with proper MIME type
+     * Hent bilder med korrekt MIME-type.
+     *
+     * @return Response
      */
-    public function getImagesAttribute(): \Illuminate\Http\Response
+    public function getImagesAttribute(): Response
     {
-        $image = null;
-        $mimeType = 'image/png';
-
+        $defaultImagePath = public_path('images/logos/spillhuset-logo-black.png');
         $imagePath = $this->image
             ? storage_path('app/public/images/events/' . $this->image)
-            : public_path('images/logos/spillhuset-logo-black.png');
+            : $defaultImagePath;
 
-        if (file_exists($imagePath)) {
-            $mimeType = mime_content_type($imagePath);
-            $image = base64_encode(file_get_contents($imagePath));
+        if (!file_exists($imagePath)) {
+            $imagePath = $defaultImagePath; // Bruk standardbildet hvis bildet ikke finnes
         }
 
-        return response($image)->header('Content-Type', $mimeType);
+        $mimeType = mime_content_type($imagePath) ?? 'image/png';
+        $imageContent = base64_encode(file_get_contents($imagePath));
+
+        return response($imageContent)->header('Content-Type', $mimeType);
     }
 }

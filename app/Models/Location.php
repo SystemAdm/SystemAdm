@@ -11,13 +11,38 @@ class Location extends Model
 {
     use SoftDeletes;
 
-    function events(): HasMany
+    protected $fillable = [
+        'name',
+        'street_name',
+        'street_number',
+        'phone_id',
+        'postal_id',
+        'lat',
+        'lng',
+        'zoom',
+    ];
+
+    /**
+     * En lokasjon kan ha mange tilknyttede events.
+     */
+    public function events(): HasMany
     {
         return $this->hasMany(Event::class);
     }
 
-    function postal(): BelongsTo
+    /**
+     * En lokasjon tilhører en postnummer (postal).
+     */
+    public function postal(): BelongsTo
     {
-        return $this->belongsTo(Postal::class, 'code');
+        return $this->belongsTo(Postal::class, 'postal_id');
+    }
+
+    /**
+     * En lokasjon har en tilknyttet telefon via relasjonen til Phone::class.
+     */
+    public function phone(): BelongsTo
+    {
+        return $this->belongsTo(Phone::class, 'phone_id');
     }
 }

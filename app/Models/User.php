@@ -2,7 +2,6 @@
 
 namespace App\Models;
 
-use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
@@ -20,7 +19,6 @@ use Spatie\Permission\Traits\HasRoles;
 
 class User extends Authenticatable
 {
-    /** @use HasFactory<UserFactory> */
     use HasApiTokens, HasFactory, Notifiable, SoftDeletes, HasRoles, HasPermissions, Billable, LaravelPermissionToVueJS;
 
     /**
@@ -32,8 +30,20 @@ class User extends Authenticatable
         'given_name',
         'additional_name',
         'family_name',
+        'active',
         'password',
+        'flag',
+        'flag_comment',
+        'state',
+        'state_comment',
+        'comment',
+        'hidden_comment',
     ];
+
+    protected function setPasswordAttribute($value): void
+    {
+        $this->attributes['password'] = bcrypt($value);
+    }
 
     /**
      * The attributes that should be hidden for serialization.
@@ -137,7 +147,9 @@ class User extends Authenticatable
      */
     public function phones(): BelongsToMany
     {
-        return $this->belongsToMany(Phone::class)->withPivot('primary','verified_at','verified_by');
+        return $this->belongsToMany(Phone::class, 'phone_user')
+            ->withPivot('primary', 'verified_by', 'verified_at')
+            ->withTimestamps();
     }
 
     /**
@@ -147,7 +159,9 @@ class User extends Authenticatable
      */
     public function emails(): BelongsToMany
     {
-        return $this->belongsToMany(Email::class)->withPivot('primary','verified_at','verified_by');
+        return $this->belongsToMany(Email::class, 'email_user')
+            ->withPivot('primary', 'verified_at', 'verified_by') // Pivot data
+            ->withTimestamps();
     }
 
     /**
@@ -187,7 +201,8 @@ class User extends Authenticatable
      */
     public function guardians(): BelongsToMany
     {
-        return $this->belongsToMany(User::class, 'guardians', 'user_id', 'guardian_id');
+        return $this->belongsToMany(User::class, 'guardian_user', 'child_id', 'guardian_id')
+            ->withPivot('role', 'verified_by', 'verified_at');
     }
 
     /**
@@ -197,10 +212,11 @@ class User extends Authenticatable
      */
     public function children(): BelongsToMany
     {
-        return $this->belongsToMany(User::class, 'guardians', 'guardian_id', 'user_id');
+        return $this->belongsToMany(User::class, 'guardian_user', 'guardian_id', 'child_id')
+            ->withPivot('role', 'verified_by', 'verified_at');
     }
 
-    public function socialAccounts()
+    public function socialAccounts(): HasMany
     {
         return $this->hasMany(SocialAccounts::class);
     }
@@ -257,4 +273,75 @@ class User extends Authenticatable
         return (int)($encodedId / 35);
     }
 
+    /**
+     * Hente brukerens primære telefonnummer.
+     */
+    public function primaryPhone(): ?Phone
+    {
+        return $this->phones()->wherePivot('primary', true)->first();
+    }
+
+    /**
+     * Hente en liste over verifiserte telefonnumre.
+     */
+    public function verifiedPhones()
+    {
+        return $this->phones()->wherePivotNotNull('verified_at')->get();
+    }
+
+    /**
+     * Sette et telefonnummer som primært for brukeren.
+     */
+    public function setPrimaryPhone(Phone $phone): void
+    {
+        // Fjern primærstatus fra alle telefonnumre for brukeren
+        $this->phones()->updateExistingPivot($this->phones->pluck('id')->toArray(), ['primary' => false]);
+
+        // Sett ny primærstatus
+        $this->phones()->updateExistingPivot($phone->id, ['primary' => true]);
+    }
+
+    /**
+     * Verifisere et telefonnummer for brukeren.
+     */
+    public function verifyPhone(Phone $phone): void
+    {
+        $this->phones()->updateExistingPivot($phone->id, ['verified_at' => now()]);
+    }
+
+    /**
+     * Hent primær e-postadresse.
+     */
+    public function primaryEmail(): ?Email
+    {
+        return $this->emails()->wherePivot('primary', true)->first();
+    }
+
+    /**
+     * Hent listen over verifiserte e-postadresser.
+     */
+    public function verifiedEmails()
+    {
+        return $this->emails()->wherePivotNotNull('verified_at')->get();
+    }
+
+    /**
+     * Sett en e-postadresse som primær.
+     */
+    public function setPrimaryEmail(Email $email): void
+    {
+        // Fjern primærstatus fra andre e-poster
+        $this->emails()->updateExistingPivot($this->emails->pluck('id')->toArray(), ['primary' => false]);
+
+        // Sett denne e-posten som primær
+        $this->emails()->updateExistingPivot($email->id, ['primary' => true]);
+    }
+
+    /**
+     * Verifiser en e-postadresse.
+     */
+    public function verifyEmail(Email $email): void
+    {
+        $this->emails()->updateExistingPivot($email->id, ['verified_at' => now()]);
+    }
 }

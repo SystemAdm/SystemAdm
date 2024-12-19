@@ -1,12 +1,10 @@
 <?php
 
+use App\Http\Controllers\SocialAuthController;
 use Illuminate\Support\Facades\Route;
 
+Route::get('/auth/{provider}/callback', [SocialAuthController::class, 'callback']);
 
-/*Route::name('authorize.')->prefix('/authorize')->group(function () {
-    Route::get('{provider}/callback', [App\Http\Controllers\Api\SocialAuthController::class,'callback'])->name('callback');
-});*/
 Route::get('{any}', function () {
-    //Auth::attempt(['id'=>8,'password'=>'Tester']);
     return view('welcome');
 })->where('any', '.*');

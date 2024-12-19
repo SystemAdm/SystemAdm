@@ -5,12 +5,8 @@ use App\Http\Controllers\Api\LocationsController;
 use App\Http\Controllers\Api\MembershipsController;
 use App\Http\Controllers\Api\PhonesController;
 use App\Http\Controllers\Api\UsersController;
-use Illuminate\Support\Facades\Route;
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-
-Route::get('/authorize/{provider}/redirect',[\App\Http\Controllers\Api\SocialAuthController::class, 'redirectToProvider']);
-Route::get('/authorize/{provider}/callback',[\App\Http\Controllers\Api\SocialAuthController::class, 'handleProviderCallback']);
+use Illuminate\Support\Facades\Route;
 
 Route::post('/logout', [UsersController::class, 'logout']);
 // Auth routes
@@ -20,7 +16,7 @@ Route::middleware('auth:sanctum')->group(function () {
 });
 
 // Public routes
-Route::get('/get-permissions', fn () => response()->json(Auth::check() ? Auth::user()->jsPermissions() : 0));
+Route::get('/get-permissions', fn() => response()->json(Auth::check() ? Auth::user()->jsPermissions() : 0));
 
 // Events routes
 Route::prefix('events')->group(function () {
