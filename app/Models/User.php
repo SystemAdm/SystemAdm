@@ -344,4 +344,28 @@ class User extends Authenticatable
     {
         $this->emails()->updateExistingPivot($email->id, ['verified_at' => now()]);
     }
+    public function isActiveGuardian(): bool
+    {
+        return $this->active === 1 && $this->children()->exists();
+    }
+
+    public function isActiveChild(): bool
+    {
+        return $this->active === 1 && $this->guardian()->exists();
+    }
+
+    public function isGuardian(): bool
+    {
+        return $this->active === 1 && $this->profile()->age() >= 18 && $this->children()->exists();
+    }
+
+    public function isAdult(): bool
+    {
+        return $this->active === 1 && $this->profile()->age() >= 18;
+    }
+
+    public function isChild(): bool
+    {
+        return $this->active === 1 && $this->profile()->age() < 18 && $this->guardian()->exists();
+    }
 }

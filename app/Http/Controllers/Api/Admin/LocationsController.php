@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Models\Location;
 use Illuminate\Http\Request;
 
 class LocationsController extends Controller
@@ -28,7 +29,7 @@ class LocationsController extends Controller
      */
     public function show(string $id)
     {
-        //
+        return Location::with('postal')->findOrFail($id);
     }
 
     /**

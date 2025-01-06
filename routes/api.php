@@ -14,10 +14,12 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/user', [UsersController::class, 'user']);
     //Route::post('/logout', [UsersController::class, 'logout']);
 });
+Route::post('/send-code', [\App\Http\Controllers\SocialAuthController::class, 'generateVerificationCode']);
+Route::post('/verify-code', [\App\Http\Controllers\SocialAuthController::class, 'verifyCode']);;
 
 // Public routes
 Route::get('/get-permissions', fn() => response()->json(Auth::check() ? Auth::user()->jsPermissions() : 0));
-
+Route::get('/rules/{location}',[\App\Http\Controllers\Api\RulesController::class, 'location']);
 // Events routes
 Route::prefix('events')->group(function () {
     Route::get('/', [EventsController::class, 'index']);
@@ -32,14 +34,13 @@ Route::apiResource('locations', LocationsController::class)->only(['index', 'sho
 
 // Users routes || not logged in
 Route::prefix('users')->group(function () {
-    Route::middleware('auth:sanctum')->group(function () {
-        Route::get('/{id}/qr', [UsersController::class, 'qr']);
-    });
+    Route::post('reset_password', [UsersController::class, 'resetPassword']);
     Route::get('/{id}/qr', [UsersController::class, 'qr']);
     Route::post('/login', [UsersController::class, 'login']);
     Route::post('/check', [UsersController::class, 'check']);
-    Route::post('/validate_phone', [UsersController::class, 'validatePhone']);
-    Route::post('/validate_email', [UsersController::class, 'validateEmail']);
+    Route::post('/validate_input', [UsersController::class, 'validateInput']);
+//    Route::post('/validate_phone', [UsersController::class, 'validatePhone']);
+//    Route::post('/validate_email', [UsersController::class, 'validateEmail']);
     Route::post('/findByPhone', [UsersController::class, 'findByPhone']);
     Route::get('/{user}', [UsersController::class, 'show']);
     Route::post('/', [UsersController::class, 'store']);
@@ -54,7 +55,7 @@ Route::prefix('memberships')->group(function () {
 });
 
 // Admin routes
-Route::prefix('admin')->name('admin.')->middleware('auth:sanctum')->group(function () {
+Route::prefix('admin')->name('admin.')->group(function () {
     Route::apiResource('rules', \App\Http\Controllers\Api\Admin\RulesController::class);
     Route::post('upload/{type}', [\App\Http\Controllers\Api\Admin\UploadController::class, 'upload']);
     Route::apiResource('events', \App\Http\Controllers\Api\Admin\EventsController::class);

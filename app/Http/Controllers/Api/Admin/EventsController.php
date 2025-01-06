@@ -13,7 +13,7 @@ class EventsController extends Controller
      */
     public function index()
     {
-        return Event::withTrashed()->with('location')->orderBy('event_begin', 'desc')->get();
+        return Event::withTrashed()->with('location')->orderBy('event_begin', 'desc')->where('id',122)->get();
     }
 
     /**

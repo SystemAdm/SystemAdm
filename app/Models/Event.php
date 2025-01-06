@@ -47,8 +47,8 @@ class Event extends Model
         'seats_available',
         'duration_hours',
         'duration_days',
-        'event_time_end',
-        'event_time_start',
+        'event_end_time',
+        'event_begin_time',
         'event_date',
     ];
 
@@ -153,7 +153,7 @@ class Event extends Model
             return '';
         }
 
-        $formatted = $date->format('D d M Y H:i');
+        $formatted = $date->format('D d M Y');
         $formatted = strtr($formatted, self::DAYS);
         return ucfirst(strtolower(strtr($formatted, self::MONTHS)));
     }
@@ -245,8 +245,11 @@ class Event extends Model
      */
     public function getDurationDaysAttribute(): int
     {
-        return optional($this->event_begin)
-            ->diffInDays(optional($this->event_end), false) ?? 0;
+        if (!$this->event_begin || !$this->event_end) {
+            return 0; // Returner 0 hvis event_start eller event_end er null
+        }
+
+        return $this->event_begin->diffInDays($this->event_end, false);
     }
 
     /**
@@ -254,8 +257,11 @@ class Event extends Model
      */
     public function getDurationHoursAttribute(): int
     {
-        return optional($this->event_begin)
-            ->diffInHours(optional($this->event_end), false) ?? 0;
+        if (!$this->event_begin || !$this->event_end) {
+            return 0; // Returner 0 hvis event_start eller event_end er null
+        }
+
+        return $this->event_begin->diffInHours($this->event_end, false);
     }
 
     /**
@@ -269,7 +275,7 @@ class Event extends Model
     /**
      * Hent starttid for arrangementet i H:i-format.
      */
-    public function getEventTimeStartAttribute(): string
+    public function getEventBeginTimeAttribute(): string
     {
         return optional($this->event_begin)->format('H:i') ?? '';
     }
@@ -277,7 +283,7 @@ class Event extends Model
     /**
      * Hent slutttid for arrangementet i H:i-format.
      */
-    public function getEventTimeEndAttribute(): string
+    public function getEventEndTimeAttribute(): string
     {
         return optional($this->event_end)->format('H:i') ?? '';
     }

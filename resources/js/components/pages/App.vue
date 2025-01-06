@@ -1,53 +1,53 @@
 <!-- App.vue -->
 <template>
-    <div class="w-full relative">
-        <div v-if="loading" class="absolute inset-0 flex items-center justify-center bg-gray-100 bg-opacity-75 z-50">
-            <div class="loader"></div>
-        </div>
+    <div class="w-full relative ">
         <Navbar :user="user" @handleLogout="handleLogout"/>
         <div class="py-5">
             <router-view :me="user" @update="update"/>
         </div>
 
-        <NotificationGroup v-for="type in notificationTypes" :key="type" :group="type" v-show="!loading">
-            <div class="fixed inset-0 flex items-start justify-end p-6 px-4 py-6 pointer-events-none">
-                <div class="w-full max-w-sm">
-                    <Notification
-                        v-slot="{ notifications }"
-                        enter="transform ease-out duration-300 transition"
-                        enter-from="translate-y-2 opacity-0 sm:translate-y-0 sm:translate-x-4"
-                        enter-to="translate-y-0 opacity-100 sm:translate-x-0"
-                        leave="transition ease-in duration-500"
-                        leave-from="opacity-100"
-                        leave-to="opacity-0"
-                        move="transition duration-500"
-                        move-delay="delay-300"
-                    >
-                        <div
-                            class="flex w-full max-w-sm mx-auto mt-4 overflow-hidden bg-white rounded-lg shadow-md"
-                            v-for="notification in notifications"
-                            :key="notification.id"
+        <template v-if="!loading">
+            <NotificationGroup v-for="type in notificationTypes" :key="type" :group="type">
+                <div class="fixed inset-0 flex items-start justify-end p-6 px-4 py-6 pointer-events-none">
+                    <div class="w-full max-w-sm">
+                        <Notification
+                            v-slot="{ notifications }"
+                            enter="transform ease-out duration-300 transition"
+                            enter-from="translate-y-2 opacity-0 sm:translate-y-0 sm:translate-x-4"
+                            enter-to="translate-y-0 opacity-100 sm:translate-x-0"
+                            leave="transition ease-in duration-500"
+                            leave-from="opacity-100"
+                            leave-to="opacity-0"
+                            move="transition duration-500"
+                            move-delay="delay-300"
                         >
-                            <div class="flex items-center justify-center w-12" :class="bgColorClass[type]">
-                                <svg class="w-6 h-6 text-white fill-current" viewBox="0 0 40 40">
-                                    <path :d="iconPath[type]"/>
-                                </svg>
-                            </div>
-                            <div class="px-4 py-2 -mx-3">
-                                <div class="mx-3">
+                            <div
+                                class="flex w-full max-w-sm mx-auto mt-4 overflow-hidden bg-white rounded-lg shadow-md"
+                                v-for="notification in notifications"
+                                :key="notification.id"
+                            >
+                                <div class="flex items-center justify-center w-12" :class="bgColorClass[type]">
+                                    <svg class="w-6 h-6 text-white fill-current" viewBox="0 0 40 40">
+                                        <path :d="iconPath[type]"/>
+                                    </svg>
+                                </div>
+                                <div class="px-4 py-2 -mx-3">
+                                    <div class="mx-3">
                                     <span class="font-semibold" :class="textColorClass[type]">
                                         {{
                                             notification.title
                                         }}{{ type === 'generic' || type === 'success' ? 'Info' : '' }}
                                     </span>
-                                    <p class="text-sm text-gray-600">{{ notification.text }}</p>
+                                        <p class="text-sm text-gray-600">{{ notification.text }}</p>
+                                    </div>
                                 </div>
                             </div>
-                        </div>
-                    </Notification>
+                        </Notification>
+                    </div>
                 </div>
-            </div>
-        </NotificationGroup>
+            </NotificationGroup>
+        </template>
+        <DarkModeToggle></DarkModeToggle>
     </div>
 </template>
 
@@ -57,6 +57,7 @@ import axios from "axios";
 import Navbar from '../Navbar.vue';
 import {Notification, NotificationGroup, notify} from "notiwind";
 import {useRouter as $router} from "vue-router";
+import DarkModeToggle from "../DarkModeToggle.vue";
 
 // Initialiser window.Laravel hvis det ikke eksisterer
 window.Laravel = window.Laravel || {
@@ -169,4 +170,6 @@ provide('fetchAuthenticatedUser', fetchAuthenticatedUser);
 watch(user, (newVal) => {
     console.log("User changed:", newVal);
 });
+
+provide('user',user);
 </script>

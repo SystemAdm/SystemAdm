@@ -13,6 +13,9 @@ use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Password;
+use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Str;
 use libphonenumber\NumberParseException;
 use libphonenumber\PhoneNumberUtil;
 
@@ -23,6 +26,21 @@ class UsersController extends Controller
     public function __construct()
     {
         $this->phoneUtil = PhoneNumberUtil::getInstance();
+    }
+
+    /**
+     * @throws NumberParseException
+     */
+    public function validateInput(Request $request)
+    {
+        $validated = $request->validate(['input' => ['required', 'string', 'max:255', 'min:5']]);
+        $input = $validated['input'];
+
+        if (Str::contains($input, '@') && Str::contains(Str::after($input, '@'), '.')) {
+            return $this->validateEmail(['email' => $input]);
+        } else {
+            return $this->validatePhone(['phone' => $input]);
+        }
     }
 
     /**
@@ -196,20 +214,23 @@ class UsersController extends Controller
     /**
      * @throws NumberParseException
      */
-    public function validatePhone(Request $request)
+    public function validatePhone($input)
     {
-        $validated = $request->validate(['phone' => 'required']);
+        $validated = Validator::make($input, ['phone' => 'required'])->validated();
         $parsed = $this->phoneUtil->parse($validated['phone'], 'NO');
         if ($this->phoneUtil->isValidNumber($parsed)) {
-            $phone = Phone::with('user', 'user.profile.postal', 'user.guardians', 'user.children')->where('number', $parsed->getNationalNumber())->where('country', $parsed->getCountryCode())->first();
-            return response()->json($phone->user != null ? $phone : 1);
+            $phone = Phone::with('users.profile.postal', 'users.guardians', 'users.children')->where('number', $parsed->getNationalNumber())->where('country', $parsed->getCountryCode())->first();
+            if ($phone && $phone->users->count() > 0) {
+                return response()->json(['valid' => true, 'object' => 'phone', 'data' => $phone->users->keyBy('id'),'innData'=>'+'.$parsed->getCountryCode().$parsed->getNationalNumber()]);
+            }
+            return response()->json(['valid' => true, 'object' => 'phone','innData'=>'+'.$parsed->getCountryCode().$parsed->getNationalNumber()]);
         }
-        return response()->json(0);
+        return response()->json(['valid' => false, 'object' => 'phone']);
     }
 
-    public function validateEmail(Request $request)
+    public function validateEmail($input)
     {
-        $validated = $request->validate(['email' => 'required']);
+        $validated = Validator::make($input, ['email' => 'required|email'])->validated();
         $split = explode('@', $validated['email']);
 
         $name = $split[0]; // Part before @ (username)
@@ -224,13 +245,13 @@ class UsersController extends Controller
 
         $email = Email::with('users', 'users.profile.postal', 'users.guardians', 'users.children')->where('name', $name)->where('domain', $domain)->where('tld', $tld)->first();
         if ($email && $email->users->count() > 0) {
-            return response()->json($email->users->keyBy('id'));
+            return response()->json(['valid' => true, 'object' => 'email', 'data' => $email->users->keyBy('id'),'innData'=>$name."@".$domain.".".$tld]);
         }
 
         if ($name != null && $domain != null && $tld != null) {
-            return response()->json(1);
+            return response()->json(['valid' => true, 'object' => 'email','innData'=>$name."@".$domain.".".$tld]);
         }
-        return response()->json(0);
+        return response()->json(['valid' => false, 'object' => 'email']);
     }
 
     public function qr(User $user)
@@ -376,5 +397,16 @@ class UsersController extends Controller
                 'message' => 'Failed to logout'
             ], 500);
         }
+    }
+    public function resetPassword(Request $request)
+    {
+        $validated = $request->validate([
+            'user' => 'required|exists:users,id',
+            'password' => 'string|required|confirmed',
+        ]);
+        $user = User::findOrFail($validated['user']);
+        $user->password = $validated['password'];
+        $user->save();
+        return response()->json(['success' => true, 'message' => __('auth.password_changed')]);
     }
 }

@@ -36,30 +36,50 @@ class Phone extends Model
     {
         try {
             $phoneUtil = PhoneNumberUtil::getInstance();
-            // Fjern '+' fra landkode om nødvendig
-            $countryCode = ltrim($this->country, '+');
 
-            // Parse telefonnummeret med landkode
-            $phone = $phoneUtil->parse($this->number, null); // Ingen hardkodet region
-            $phone->setCountryCode((int)$countryCode);
+            // Hvis "country" ikke er oppgitt (eller feil format), bruk 'ZZ' (ukjent region)
+            $countryCode = ltrim($this->country ?? '', '+');
+            $phone = $phoneUtil->parse($this->number, null);
 
-            // Formater til internasjonalt format
+            // Hvis landkode ikke er satt riktig, oppdaterer vi den
+            if (!$phone->hasCountryCode() && is_numeric($countryCode)) {
+                $phone->setCountryCode((int)$countryCode);
+            }
+
+            // Formater telefonnumre til internasjonalt format
             return $phoneUtil->format($phone, PhoneNumberFormat::INTERNATIONAL);
         } catch (NumberParseException $e) {
-            // Returner et fallback (eller kast unntak videre)
-            return $this->country . ' ' . $this->number;
+            // Feilhåndtering, logg unntaket og gi en fallback
+            \Log::error('Feil ved parsing av telefonnummer: ' . $e->getMessage());
+            return trim($this->country . ' ' . $this->number); // Returner det rå formatet som en fallback
         }
     }
+
     protected function country(): Attribute
     {
         return Attribute::make(
             set: fn(string $value) => preg_replace('/\D/', '', $value) // Behold kun tall
         );
     }
+
+    // Valider telefonnummer før lagring
     protected function number(): Attribute
     {
         return Attribute::make(
-            set: fn(string $value) => preg_replace('/\D/', '', $value) // Bare tall
+            set: function (string $value) {
+                $phoneUtil = PhoneNumberUtil::getInstance();
+                $defaultCountry = '47'; // Default til Norge
+
+                try {
+                    // Prøv å parse nummeret
+                    $phone = $phoneUtil->parse($value, $this->country ?? $defaultCountry);
+
+                    // Formater til E164 format
+                    return $phoneUtil->format($phone, PhoneNumberFormat::E164);
+                } catch (NumberParseException $e) {
+                    throw new \InvalidArgumentException("Ugyldig nummer: {$value}");
+                }
+            }
         );
     }
 }

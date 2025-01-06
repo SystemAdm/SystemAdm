@@ -3,6 +3,8 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Models\Location;
+use App\Models\Rule;
 use Illuminate\Http\Request;
 
 class RulesController extends Controller
@@ -45,5 +47,8 @@ class RulesController extends Controller
     public function destroy(string $id)
     {
         //
+    }
+    public function location(Request $request,Location $location) {
+        return Rule::where('location_id',$location->id)->get();
     }
 }

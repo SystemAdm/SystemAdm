@@ -8,42 +8,43 @@ import {FontAwesomeIcon} from "@fortawesome/vue-fontawesome";
 import {library} from '@fortawesome/fontawesome-svg-core'
 import {i18nVue} from 'laravel-vue-i18n'
 import {
+    faAddressCard,
     faArrowLeft,
     faArrowRight,
-    faBars,
-    faCheck, faCircleNodes, faCircleNotch,
+    faBars, faCalendarPlus,
+    faCheck, faCheckCircle, faCircleNodes, faCircleNotch, faCirclePlus,
     faClock,
     faEnvelope,
     faEye,
-    faEyeSlash,
+    faEyeSlash, faFlagCheckered, faGear,
     faIdCard,
     faInfoCircle,
     faLink,
-    faLock,
+    faLock, faLockOpen,
     faMagnifyingGlass,
     faMapMarker,
     faPencil,
     faPeoplePulling,
     faPhone, faPlayCircle,
     faPlus,
-    faQrcode,
+    faQrcode, faRandom,
     faRightToBracket,
-    faRotateLeft,
-    faShield,
+    faRotateLeft, faSave,
+    faShield, faSignIn, faSpinner,
     faStamp,
-    faStar, faStopCircle,
+    faStar, faStopCircle, faTimesCircle,
     faTrash,
     faTrashCan,
     faTrashCanArrowUp,
     faTriangleExclamation,
     faUser,
-    faUserPlus,
+    faUserPlus, faUserShield,
     faXmark,
 } from '@fortawesome/free-solid-svg-icons'
 import {faStar as faRegularStar} from '@fortawesome/free-regular-svg-icons';
 import {faGithub, faGoogle} from "@fortawesome/free-brands-svg-icons";
 
-library.add(faUser, faMagnifyingGlass, faEnvelope, faPhone, faMapMarker, faShield, faQrcode, faIdCard, faBars, faTrashCan, faArrowRight, faArrowLeft, faLock, faClock, faCheck, faTrashCanArrowUp, faXmark, faPeoplePulling, faUserPlus, faEye, faEyeSlash, faRightToBracket, faRotateLeft, faInfoCircle, faPlus, faTriangleExclamation, faTrash, faPencil, faStar, faStamp, faRegularStar, faLink, faGoogle, faGithub,faCircleNotch,faPlayCircle,faStopCircle);
+library.add(faUser, faMagnifyingGlass, faEnvelope, faPhone, faMapMarker, faShield, faQrcode, faIdCard, faBars, faTrashCan, faArrowRight, faArrowLeft, faLock, faClock, faCheck, faTrashCanArrowUp, faXmark, faPeoplePulling, faUserPlus, faEye, faEyeSlash, faRightToBracket, faRotateLeft, faInfoCircle, faPlus, faTriangleExclamation, faTrash, faPencil, faStar, faStamp, faRegularStar, faLink, faGoogle, faGithub,faCircleNotch,faPlayCircle,faStopCircle,faCirclePlus,faLockOpen,faSpinner,faSave,faRandom,faUserShield,faSignIn,faGear,faAddressCard,faFlagCheckered, faTimesCircle, faCheckCircle, faCalendarPlus);
 axios.defaults.withCredentials = true;
 
 // Define routes
@@ -51,13 +52,18 @@ const routes = [
     {
         path: '/signin',
         name: 'SignIn',
-        component: () => import('./components/pages/SignIn.vue'), // Lazy load
+        component: () => import('./components/pages/Login.vue'), // Lazy load
     },
     {
-        path: '/register',
-        name: 'Register',
-        component: () => import('./components/pages/Register.vue'), // Lazy load
-    }
+        path: '/admins/events',
+        name: 'AdminsEventsIndex',
+        component:() => import('./components/pages/admins/EventsIndex.vue'),
+    },
+    {
+        path: '/admins/locations/:id',
+        name: 'AdminsLocationsShow',
+        component:() => import('./components/pages/admins/LocationsShow.vue'),
+    },
 ];
 
 // Create router
