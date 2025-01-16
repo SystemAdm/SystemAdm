@@ -9,17 +9,10 @@ export default {
         './resources/**/*.blade.php',
         './resources/**/*.js',
         './resources/**/*.vue',
+        './resources/css/**/*.css',
     ],
     theme: {
         extend: {
-            fontFamily: {
-                sans: ['Figtree', ...defaultTheme.fontFamily.sans],
-            },
-            container: {
-                lineHeight: '1.4em',
-                fontSize: '16px',
-                justifyContent:'center',
-            }
         },
     },
     plugins: [

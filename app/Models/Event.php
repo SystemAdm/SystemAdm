@@ -94,7 +94,9 @@ class Event extends Model
      */
     public function registered(): BelongsToMany
     {
-        return $this->belongsToMany(User::class, 'event_registered')->withTimestamps();
+        return $this->belongsToMany(User::class, 'event_registered')
+            ->withPivot('created_at', 'updated_at')
+            ->withTimestamps();
     }
 
     /**
@@ -104,7 +106,9 @@ class Event extends Model
      */
     public function registeredCrew(): BelongsToMany
     {
-        return $this->belongsToMany(User::class, 'event_registered_crew')->withTimestamps();
+        return $this->belongsToMany(User::class, 'event_registered_crew')
+            ->withPivot('created_at', 'updated_at')
+            ->withTimestamps();
     }
 
     /**
@@ -114,7 +118,9 @@ class Event extends Model
      */
     public function attending(): BelongsToMany
     {
-        return $this->belongsToMany(User::class, 'event_attending')->withTimestamps();
+        return $this->belongsToMany(User::class, 'event_attending')
+            ->withPivot('created_at', 'updated_at')
+            ->withTimestamps();
     }
 
     /**
@@ -124,7 +130,9 @@ class Event extends Model
      */
     public function attendingCrew(): BelongsToMany
     {
-        return $this->belongsToMany(User::class, 'event_attending_crew')->withTimestamps();
+        return $this->belongsToMany(User::class, 'event_attending_crew')
+            ->withPivot('created_at', 'updated_at')
+            ->withTimestamps();
     }
 
     /**
@@ -134,7 +142,9 @@ class Event extends Model
      */
     public function insider(): BelongsToMany
     {
-        return $this->belongsToMany(User::class, 'event_inside')->withTimestamps();
+        return $this->belongsToMany(User::class, 'event_inside')
+            ->withPivot('created_at', 'updated_at')
+            ->withTimestamps();
     }
 
     /**
@@ -144,7 +154,9 @@ class Event extends Model
      */
     public function insiderCrew(): BelongsToMany
     {
-        return $this->belongsToMany(User::class, 'event_inside_crew')->withTimestamps();
+        return $this->belongsToMany(User::class, 'event_inside_crew')
+            ->withPivot('created_at', 'updated_at')
+            ->withTimestamps();
     }
 
     private function formatDate(?Carbon $date): string
@@ -211,7 +223,7 @@ class Event extends Model
      */
     public function getEventBeganAttribute(): bool
     {
-        return optional($this->event_begin)->isPast() && optional($this->event_end)->isFuture();
+        return optional($this->event_begin)->isPast() ?? false;
     }
 
     /**
@@ -249,7 +261,7 @@ class Event extends Model
             return 0; // Returner 0 hvis event_start eller event_end er null
         }
 
-        return $this->event_begin->diffInDays($this->event_end, false);
+        return (int)$this->event_begin->diffInDays($this->event_end, false);
     }
 
     /**
@@ -261,7 +273,7 @@ class Event extends Model
             return 0; // Returner 0 hvis event_start eller event_end er null
         }
 
-        return $this->event_begin->diffInHours($this->event_end, false);
+        return (int)$this->event_begin->diffInHours($this->event_end, false);
     }
 
     /**
@@ -309,4 +321,14 @@ class Event extends Model
 
         return response($imageContent)->header('Content-Type', $mimeType);
     }
+
+    const RELATIONS = [
+        'REGISTERED' => 'registered',
+        'REGISTERED_CREW' => 'registeredCrew',
+        'INSIDER' => 'insider',
+        'INSIDER_CREW' => 'insiderCrew',
+        'ATTENDING' => 'attending',
+        'ATTENDING_CREW' => 'attendingCrew',
+        'NONE' => null,
+    ];
 }

@@ -29,7 +29,7 @@ class LocationsController extends Controller
      */
     public function show(string $id)
     {
-        return Location::with('postal')->findOrFail($id);
+        return Location::with('postal','email')->findOrFail($id);
     }
 
     /**

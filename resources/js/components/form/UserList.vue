@@ -82,7 +82,7 @@
 <script setup>
 import {trans} from 'laravel-vue-i18n';
 import {FontAwesomeIcon} from "@fortawesome/vue-fontawesome";
-import BackButton from "../BackButton.vue";
+import BackButton from "../utils/BackButton.vue";
 
 // Props: Data fra API og input fra brukeren
 const props = defineProps({

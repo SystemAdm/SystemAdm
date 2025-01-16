@@ -60,7 +60,7 @@
 <script setup>
 import {trans} from "laravel-vue-i18n";
 import {ref} from "vue";
-import BackButton from "../BackButton.vue";
+import BackButton from "../utils/BackButton.vue";
 import NextButton from "../NextButton.vue";
 
 const errorMessage = ref('');

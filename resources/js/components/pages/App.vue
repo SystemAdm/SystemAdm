@@ -1,6 +1,6 @@
 <!-- App.vue -->
 <template>
-    <div class="w-full relative ">
+    <div class="mx-3 max-w-screen-xl min-h-screen flex flex-col justify-between">
         <Navbar :user="user" @handleLogout="handleLogout"/>
         <div class="py-5">
             <router-view :me="user" @update="update"/>

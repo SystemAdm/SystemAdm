@@ -40,6 +40,22 @@ class User extends Authenticatable
         'hidden_comment',
     ];
 
+    protected static function booted(): void
+    {
+        static::addGlobalScope('roles', function ($builder) {
+            $builder->with('roles');
+        });
+        static::addGlobalScope('profile', function ($builder) {
+            $builder->with('profile');
+        });
+        static::addGlobalScope('phones', function ($builder) {
+            $builder->with('phones');
+        });
+        static::addGlobalScope('emails', function ($builder) {
+            $builder->with('emails');
+        });
+    }
+
     protected function setPasswordAttribute($value): void
     {
         $this->attributes['password'] = bcrypt($value);
@@ -344,6 +360,7 @@ class User extends Authenticatable
     {
         $this->emails()->updateExistingPivot($email->id, ['verified_at' => now()]);
     }
+
     public function isActiveGuardian(): bool
     {
         return $this->active === 1 && $this->children()->exists();

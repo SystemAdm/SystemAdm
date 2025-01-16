@@ -1,140 +1,120 @@
 <template>
-    <div>
-        <!-- Hovedoverskrift -->
-        <div>
-            <h1 class="text-2xl font-bold mb-4">{{ trans('events.AdminIndex') }}</h1>
+    <div class="text-gray-800 dark:text-gray-200">
+        <h1 class="text-3xl font-bold mb-4">{{ trans('events.Index') }}</h1>
+        <BackButton @goBack="router.back()"/>
+        <!-- Lastingindikator -->
+        <div v-if="loading" class="text-center">
+            <p>
+                <font-awesome-icon icon="fa-spinner" spin class="mr-2"/>
+                {{ trans('Loading...') }}
+            </p>
+        </div>
+        <!-- Feilmelding -->
+        <div v-if="error" class="text-red-500 text-center my-4">
+            {{ trans('error_loading') }}: {{ error }}
+        </div>
 
-            <!-- Loader -->
-            <div v-if="loading" class="text-center">
-                <div class="loader"></div>
-                <p>Laster data...</p>
+        <!-- Event-fliser -->
+        <div v-if="!loading && events.length > 0"
+             class="text-center table-auto w-full rounded-lg shadow-md overflow-hidden bg-white dark:bg-gray-800 dark:border-gray-700 hover:shadow-lg transition duration-200 p-2">
+            <div class="table-header-group">
+                <div class="table-row">
+                    <div class="table-cell row-span-2">ID</div>
+                    <div class="table-cell row-span-2">R & E</div>
+                    <div class="table-cell">Title</div>
+                    <div class="table-cell">Users</div>
+                    <div class="table-cell">Crew</div>
+                </div>
+                <div class="table-row border border-b-2 border-gray-200">
+                    <div class="table-cell"></div>
+                    <div class="table-cell"></div>
+                    <div class="table-cell"></div>
+                    <div class="table-cell"><abbr title="Registered">R</abbr> / <abbr title="Attending">A</abbr> / <abbr
+                        title="Inside">I</abbr></div>
+                    <div class="table-cell"><abbr title="Registered">R</abbr> / <abbr title="Attending">A</abbr> / <abbr
+                        title="Inside">I</abbr></div>
+                </div>
             </div>
-
-            <!-- Event-fliser -->
-            <div v-else>
-                <div v-if="events.length > 0" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    <div
-                        v-for="event in events"
-                        :key="event.id"
-                        class="border rounded-lg shadow-md overflow-hidden bg-white dark:bg-gray-800 dark:border-gray-700 hover:shadow-lg transition duration-200"
-                    >
-                        <!-- Bildet som header -->
-                        <div v-if="event.images && event.images.original" class="h-48 w-full relative">
-                            <img
-                                :src="'data:image/png;base64,' + event.images.original"
-                                :alt="event.title"
-                                class="w-full h-full object-cover"
-                            />
-                        </div>
-
-                        <!-- Flisinnhold -->
-                        <div class="p-4">
-                            <!-- Event Tittel -->
-                            <h2 class="text-xl font-semibold text-gray-800 dark:text-gray-200 mb-2">{{ event.title }}</h2>
-
-                            <!-- Event Beskrivelse -->
-                            <p class="text-gray-600 dark:text-gray-400 text-sm mb-2">{{ event.description }}</p>
-
-                            <!-- Statusseksjon -->
-                            <div class="flex items-center space-x-4 mt-2 text-gray-600 dark:text-gray-400">
-                                <!-- Event start/slutt status -->
-                                <div>
-                                    <font-awesome-icon
-                                        v-if="event.event_ended"
-                                        :icon="['fas', 'flag-checkered']"
-                                        class="text-red-500"
-                                        :title="'Eventet er avsluttet'"
-                                    />
-                                    <font-awesome-icon
-                                        v-else-if="event.event_began && !event.event_ended"
-                                        :icon="['fas', 'play-circle']"
-                                        class="text-green-500"
-                                        :title="'Eventet er startet, men ikke avsluttet'"
-                                    />
-                                    <font-awesome-icon
-                                        v-else-if="!event.event_began"
-                                        :icon="['fas', 'clock']"
-                                        class="text-yellow-500"
-                                        :title="'Eventet har ikke startet'"
-                                    />
-                                </div>
-
-                                <!-- Påmeldingsstatus -->
-                                <div>
-                                    <font-awesome-icon
-                                        v-if="event.signup_ended"
-                                        :icon="['fas', 'times-circle']"
-                                        class="text-red-500"
-                                        :title="'Påmeldingen til eventet er avsluttet'"
-                                    />
-                                    <font-awesome-icon
-                                        v-else-if="event.signup_began && !event.signup_ended"
-                                        :icon="['fas', 'check-circle']"
-                                        class="text-green-500"
-                                        :title="'Påmeldingen er åpen'"
-                                    />
-                                    <font-awesome-icon
-                                        v-else-if="!event.signup_began"
-                                        :icon="['fas', 'calendar-plus']"
-                                        class="text-yellow-500"
-                                        :title="'Påmeldingen har ikke startet enda'"
-                                    />
-                                </div>
-                            </div>
-
-                            <template v-if="event.duration_days === 0">
-                                <p>
-                                    <strong>Dato:</strong> {{ event.event_begin_date }}
-                                </p>
-                                <p>
-                                    <strong>Tid:</strong> {{ event.event_begin_time }} - {{ event.event_end_time }}
-                                </p>
-                                <p>
-                                    <strong>Varighet:</strong> {{ event.duration_hours }} timer
-                                </p>
-                            </template>
-
-                            <!-- Hvis eventet varer over flere dager -->
-                            <template v-else>
-                                <p>
-                                    <strong>Start:</strong> {{ event.event_begin_date }} kl. {{ event.event_begin_time }}
-                                </p>
-                                <p>
-                                    <strong>Varighet:</strong> {{ event.duration_days }} dager og {{ event.duration_hours }} timer
-                                </p>
-                                <p>
-                                    <strong>Slutt:</strong> {{ event.event_end_date }} kl. {{ event.event_end_time }}
-                                </p>
-                            </template>
-
-                            <!-- Lokasjon -->
-                            <p class="text-sm text-gray-500 dark:text-gray-400 mt-2">
-                                <strong>Sted:</strong> <router-link :to="'/admins/locations/'+event.location.id">{{ event.location.name }}</router-link>
-                            </p>
-                        </div>
+            <div
+                v-for="event in events"
+                :key="event.id"
+                class="table-row border rounded-lg shadow-md overflow-hidden bg-white dark:bg-gray-800 dark:border-gray-700 hover:shadow-lg transition duration-200 cursor-pointer"
+                @click="router.push('/admins/events/' + event.id)"
+            >
+                <div class="table-cell px-1">{{ event.id }}</div>
+                <div class="table-cell items-center text-gray-600 dark:text-gray-400">
+                    <!-- Påmeldingsstatus -->
+                    <div class=" px-1" >
+                        <span v-if="event.registration_needed && event.signup_begin !== null">
+                        <font-awesome-icon
+                            v-if="event.signup_ended" class="text-red-500 mr-1"
+                            :icon="['fas', 'times-circle']"
+                            :title="trans('events.SignupEnded')"
+                        />
+                        <font-awesome-icon
+                            v-else-if="event.signup_began && !event.signup_ended" class="text-green-500 mr-1"
+                            :icon="['fas', 'check-circle']"
+                            :title="trans('events.SignupStarted')"
+                        />
+                        <font-awesome-icon
+                            v-else-if="!event.signup_began" class="text-yellow-500 mr-1"
+                            :icon="['fas', 'calendar-plus']"
+                            :title="trans('events.SignupNotStarted')"
+                        />
+                            </span>
+                        <!-- Event start/slutt status -->
+                        <font-awesome-icon
+                            v-if="event.event_ended" class="text-red-500 mr-1"
+                            :icon="['fas', 'flag-checkered']"
+                            :title="trans('events.EventEnded')"
+                        />
+                        <font-awesome-icon
+                            v-else-if="event.event_began && !event.event_ended" class="text-green-500 mr-1"
+                            :icon="['fas', 'play-circle']"
+                            :title="trans('events.EventStarted')"
+                        />
+                        <font-awesome-icon
+                            v-else-if="!event.event_began" class="text-yellow-500 mr-1"
+                            :icon="['fas', 'clock']"
+                            :title="trans('events.EventNotStarted')"
+                        />
                     </div>
-                </div>
 
-                <!-- Ingen events melding -->
-                <div v-else>
-                    <p class="text-center text-gray-600 dark:text-gray-400">Ingen eventer å vise.</p>
+                </div>
+                <span class="table-cell px-1">{{ event.title }}</span>
+                <div class="table-cell px-2">{{ event.registered.length }} / {{ event.attending.length }} /
+                    {{ event.insider.length }}
+                </div>
+                <div class="table-cell px-2">{{ event.registered_crew.length }} / {{ event.attending_crew.length }} /
+                    {{ event.insider_crew.length }}
                 </div>
             </div>
+        </div>
+
+        <!-- Ingen events melding -->
+        <div v-else-if="!loading">
+            <p class="text-center text-gray-600 dark:text-gray-400">{{ trans('events.NoEvents') }}.</p>
         </div>
     </div>
 </template>
 
 <script setup>
-import { trans } from "laravel-vue-i18n";
-import { onMounted, ref } from "vue";
+import {trans} from "laravel-vue-i18n";
+import {onMounted, ref} from "vue";
 import axios from "axios";
+import {useRouter} from 'vue-router';
 
 // Font Awesome
-import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
+import {FontAwesomeIcon} from '@fortawesome/vue-fontawesome';
+import BackButton from "../../utils/BackButton.vue";
+
 const events = ref([]); // Start med tom liste
 const loading = ref(true); // Laster som standard
+const error = ref(null);
+const router = useRouter();
 
 async function getEvents() {
+    loading.value = true;
     try {
         const response = await axios.get("/api/admin/events");
         events.value = response.data;

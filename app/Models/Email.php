@@ -21,6 +21,8 @@ class Email extends Model
         'deleted_at' => 'datetime',
     ];
 
+    protected $appends = ['full_email'];
+
     /**
      * Get the users associated with this email address
      *

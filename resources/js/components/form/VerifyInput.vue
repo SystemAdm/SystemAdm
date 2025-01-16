@@ -83,7 +83,7 @@ import {computed, onMounted, ref} from 'vue';
 import {trans} from 'laravel-vue-i18n';
 import axios from 'axios';
 import {FontAwesomeIcon} from "@fortawesome/vue-fontawesome";
-import BackButton from "../BackButton.vue";
+import BackButton from "../utils/BackButton.vue";
 import NextButton from "../NextButton.vue";
 import ErrorMessage from "./ErrorMessage.vue";
 

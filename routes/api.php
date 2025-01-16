@@ -58,6 +58,16 @@ Route::prefix('memberships')->group(function () {
 Route::prefix('admin')->name('admin.')->group(function () {
     Route::apiResource('rules', \App\Http\Controllers\Api\Admin\RulesController::class);
     Route::post('upload/{type}', [\App\Http\Controllers\Api\Admin\UploadController::class, 'upload']);
+    Route::post('events/{event}/attend',[App\Http\Controllers\Api\Admin\EventsController::class, 'attend']);
+    Route::post('events/{event}/unattend',[App\Http\Controllers\Api\Admin\EventsController::class, 'unattend']);
+    Route::post('events/{event}/inside',[App\Http\Controllers\Api\Admin\EventsController::class, 'inside']);
+    Route::post('events/{event}/leave',[App\Http\Controllers\Api\Admin\EventsController::class, 'leave']);
+    Route::post('events/{event}/trash',[App\Http\Controllers\Api\Admin\EventsController::class, 'trash']);
+    Route::post('events/{event}/start_over',[App\Http\Controllers\Api\Admin\EventsController::class, 'startOver']);
+    Route::post('events/{event}/signup_begin_now',[App\Http\Controllers\Api\Admin\EventsController::class, 'signupBeginNow']);
+    Route::post('events/{event}/signup_end_now',[App\Http\Controllers\Api\Admin\EventsController::class, 'signupEndNow']);
+    Route::post('events/{event}/event_begin_now',[App\Http\Controllers\Api\Admin\EventsController::class, 'eventBeginNow']);
+    Route::post('events/{event}/event_end_now',[App\Http\Controllers\Api\Admin\EventsController::class, 'eventEndNow']);
     Route::apiResource('events', \App\Http\Controllers\Api\Admin\EventsController::class);
     Route::apiResource('locations', \App\Http\Controllers\Api\Admin\LocationsController::class);
     Route::apiResource('users', \App\Http\Controllers\Api\Admin\UsersController::class);

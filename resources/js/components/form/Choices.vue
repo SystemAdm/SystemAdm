@@ -116,7 +116,7 @@
 
 <script setup>
 import {trans} from 'laravel-vue-i18n';
-import BackButton from "../BackButton.vue";
+import BackButton from "../utils/BackButton.vue";
 import {FontAwesomeIcon} from "@fortawesome/vue-fontawesome";
 
 // Props: Data fra API

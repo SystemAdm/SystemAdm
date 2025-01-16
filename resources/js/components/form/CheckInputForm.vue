@@ -71,7 +71,7 @@ import {trans} from 'laravel-vue-i18n';
 import {FontAwesomeIcon} from "@fortawesome/vue-fontawesome";
 import NextButton from "../NextButton.vue";
 import ErrorMessage from "./ErrorMessage.vue";
-import BackButton from "../BackButton.vue";
+import BackButton from "../utils/BackButton.vue";
 import axios from "axios";
 
 const props = defineProps({
