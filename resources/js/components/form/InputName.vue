@@ -61,7 +61,7 @@
 import {trans} from "laravel-vue-i18n";
 import {ref} from "vue";
 import BackButton from "../utils/BackButton.vue";
-import NextButton from "../NextButton.vue";
+import NextButton from "../utils/NextButton.vue";
 
 const errorMessage = ref('');
 const name = ref({

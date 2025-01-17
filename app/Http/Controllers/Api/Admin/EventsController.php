@@ -26,15 +26,22 @@ class EventsController extends Controller
         return Event::withTrashed()->with('location', 'registered', 'registeredCrew', 'insider', 'insiderCrew', 'attending', 'attendingCrew')->orderBy('event_begin', 'desc')->get();
     }
 
+    public function recover(string $event)
+    {
+        $recover = Event::withTrashed()->where('id', $event)->first();
+        $recover->restore();
+        return response()->json(['success' => 'Event recovered successfully']);
+    }
+
     public function startOver(Request $request, Event $event)
     {
         $validated = $request->validate([
             'showEvent' => ['required', 'boolean'],
             'showSignup' => ['required', 'boolean'],
-            'eventBegin' => ['required_if:showEvent,true', 'date','nullable'],
-            'eventEnd' => ['required_if:showEvent,true', 'date','nullable'],
-            'signupBegin' => ['required_if:showSignup,true', 'date','nullable'],
-            'signupEnd' => ['required_if:showSignup,true', 'date','nullable'],
+            'eventBegin' => ['required_if:showEvent,true', 'date', 'nullable'],
+            'eventEnd' => ['required_if:showEvent,true', 'date', 'nullable'],
+            'signupBegin' => ['required_if:showSignup,true', 'date', 'nullable'],
+            'signupEnd' => ['required_if:showSignup,true', 'date', 'nullable'],
         ]);
 
         if ($validated['showEvent']) {
@@ -49,24 +56,28 @@ class EventsController extends Controller
         $event->save();
         return response()->json(['success' => 'Event updated successfully']);
     }
+
     public function eventBeginNow(Event $event)
     {
         $event->event_begin = now();
         $event->save();
         return response()->json(['success' => 'Event updated successfully']);
     }
+
     public function eventEndNow(Event $event)
     {
         $event->event_end = now();
         $event->save();
         return response()->json(['success' => 'Event updated successfully']);
     }
+
     public function signupBeginNow(Event $event)
     {
         $event->signup_begin = now();
         $event->save();
         return response()->json(['success' => 'Event updated successfully']);
     }
+
     public function signupEndNow(Event $event)
     {
         $event->signup_end = now();
@@ -202,7 +213,27 @@ class EventsController extends Controller
      */
     public function destroy(string $id)
     {
-        //
+        $event = Event::withTrashed()->find($id);
+        $event->delete();
+        return response()->json(['success' => 'Event deleted successfully']);
+    }
+
+    public function permanent(string $event)
+    {
+        $event = Event::withTrashed()->find($event);
+        $event->forceDelete();
+        return response()->json(['success' => 'Event deleted successfully']);
+    }
+
+    public function cancel(Request $request,string $event)
+    {
+        $validated = $request->validate(['cancelled_text' => ['nullable', 'string', 'min:3', 'max:2048']]);
+        $event = Event::withTrashed()->find($event);
+        $event->cancelled = now();
+        $event->cancelled_text = $validated['cancelled_text'];
+        $event->cancelled_by = auth()?->user()?->id ?? 8;
+        $event->save();
+        return response()->json(['success' => 'Event cancelled successfully']);
     }
 
     public function register(Request $request, Event $event)

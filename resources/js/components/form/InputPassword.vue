@@ -68,7 +68,7 @@ import {ref} from 'vue';
 import {trans} from 'laravel-vue-i18n'; // Importer trans for oversettelser
 import axios from "axios";
 import BackButton from "../utils/BackButton.vue";
-import NextButton from "../NextButton.vue";
+import NextButton from "../utils/NextButton.vue";
 
 // State for felt
 const password = ref('');

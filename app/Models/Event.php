@@ -87,6 +87,11 @@ class Event extends Model
         return $this->belongsTo(Location::class, 'location_id');
     }
 
+    public function cancelled(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'cancelled_by');
+    }
+
     /**
      * Get users registered for the event
      *

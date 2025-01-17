@@ -88,8 +88,8 @@
 import {computed, ref} from "vue";
 import {trans} from "laravel-vue-i18n";
 import {FontAwesomeIcon} from "@fortawesome/vue-fontawesome";
-import BackButton from "@/components/BackButton.vue";
-import NextButton from "@/components/NextButton.vue";
+import BackButton from "../utils/BackButton.vue";
+import NextButton from "../utils/NextButton.vue";
 
 const emits = defineEmits(['goNext', 'goBack']);
 

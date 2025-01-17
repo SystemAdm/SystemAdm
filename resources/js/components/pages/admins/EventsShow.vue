@@ -97,6 +97,20 @@ const route = useRoute();
 const router = useRouter();
 
 // Funksjoner for å sjekke brukerroller og status
+async function goRecover() {
+    if (confirm(trans('events.recover_confirm'))) {
+        event.value = null;
+        loading.value = true;
+        try {
+            const response = await axios.post(`/api/admin/events/${route.params.id}/recover`);
+        } catch (err) {
+            console.error("Feil under handling:", err.message);
+        } finally {
+            await getEvent();
+        }
+    }
+}
+
 function isCrew(user) {
     return user.roles?.some((role) => role.name.toLowerCase() === "crew");
 }
@@ -123,6 +137,12 @@ function isRegistered(user) {
 }
 
 // Hent event-data fra API
+async function goDelete() {
+    if (confirm(trans('events.delete_confirm'))) {
+        event.value = null;
+        loading.value = true;
+    }
+}
 async function getEvent() {
     try {
         const response = await axios.get(`/api/admin/events/${route.params.id}`);
@@ -139,50 +159,50 @@ async function getEvent() {
 async function handleStartOver(data) {
     try {
         const response = await axios.post(`/api/admin/events/${event.value.id}/start_over`, data);
-        await response;
-        getEvent();
     } catch (err) {
         console.error("Feil under handling:", err.message);
+    } finally {
+        await getEvent();
     }
 }
 
 async function handleSignupEndNow() {
     try {
         const response = await axios.post(`/api/admin/events/${event.value.id}/signup_end_now`);
-        await response;
-        getEvent();
     } catch (err) {
         console.error("Feil under handling:", err.message);
+    } finally {
+        await getEvent();
     }
 }
 
 async function handleSignupBeginNow() {
     try {
         const response = await axios.post(`/api/admin/events/${event.value.id}/signup_begin_now`);
-        await response;
-        getEvent();
     } catch (err) {
         console.error("Feil under handling:", err.message);
+    } finally {
+        await getEvent();
     }
 }
 
 async function handleEventEndNow() {
     try {
         const response = await axios.post(`/api/admin/events/${event.value.id}/event_end_now`);
-        await response;
-        getEvent();
     } catch (err) {
         console.error("Feil under handling:", err.message);
+    } finally {
+        await getEvent();
     }
 }
 
 async function handleEventBeginNow() {
     try {
         const response = await axios.post(`/api/admin/events/${event.value.id}/event_begin_now`);
-        await response;
-        getEvent();
     } catch (err) {
         console.error("Feil under handling:", err.message);
+    } finally {
+        getEvent();
     }
 }
 

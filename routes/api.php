@@ -58,6 +58,9 @@ Route::prefix('memberships')->group(function () {
 Route::prefix('admin')->name('admin.')->group(function () {
     Route::apiResource('rules', \App\Http\Controllers\Api\Admin\RulesController::class);
     Route::post('upload/{type}', [\App\Http\Controllers\Api\Admin\UploadController::class, 'upload']);
+    Route::post('events/{event}/recover', [\App\Http\Controllers\Api\Admin\EventsController::class, 'recover']);
+    Route::post('events/{event}/cancel', [\App\Http\Controllers\Api\Admin\EventsController::class, 'cancel']);
+    Route::post('events/{event}/permanent', [\App\Http\Controllers\Api\Admin\EventsController::class, 'permanent']);
     Route::post('events/{event}/attend',[App\Http\Controllers\Api\Admin\EventsController::class, 'attend']);
     Route::post('events/{event}/unattend',[App\Http\Controllers\Api\Admin\EventsController::class, 'unattend']);
     Route::post('events/{event}/inside',[App\Http\Controllers\Api\Admin\EventsController::class, 'inside']);
