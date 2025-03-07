@@ -1,16 +1,20 @@
 <template>
     <div class="text-gray-800 dark:text-gray-200">
         <!-- Overskrift -->
-        <h1 class="text-3xl font-bold mb-4">{{ trans('events.Show') }}</h1>
+        <h1 class="text-3xl font-bold mb-4">{{ trans('events.ShowEvent') }}: {{ route.params.id }}</h1>
         <div class="flex space-x-2">
             <BackButton @goBack="router.back()"/>
-            <div v-if="event !== null && event.deleted_at === null" class="flex space-x-2">
-                <EditButton @goEdit="goEdit"/>
-                <DeleteButton @goDelete="goDelete"/>
-            </div>
-            <div v-else class="flex space-x-2">
-                <RecoverButton @goRecover="goRecover"/>
-                <PermanentButton @goPermanent="goPermanent"/>
+            <div v-if="event !== null">
+                <div v-if="event.deleted_at === null" class="flex space-x-2">
+                    <EditButton @goEdit="goEdit"/>
+                    <DeleteButton @goDelete="goDelete"/>
+                    <CancelButton v-if="!event.cancelled_time" @goCancel="goCancel"/>
+                    <UnCancelButton v-else @goUncancel="goUncancel"/>
+                </div>
+                <div v-else class="flex space-x-2">
+                    <RecoverButton @goRecover="goRecover"/>
+                    <PermanentButton @goPermanent="goPermanent"/>
+                </div>
             </div>
         </div>
         <!-- Laster-data -->
@@ -23,7 +27,7 @@
 
         <!-- Feilmelding -->
         <div v-if="error" class="text-red-500 text-center my-4">
-            {{ trans('error_loading') }}: {{ error }}
+            {{ trans('Error') }}: {{ error }}
         </div>
 
         <!-- Event handling og action bar -->
@@ -38,7 +42,7 @@
         />
 
         <!-- Event-data -->
-        <div v-if="!loading && event" class="mt-5">
+        <div v-if="!error && !loading && event && !event.cancelled_time" class="mt-5">
             <div class="grid md:grid-cols-3 gap-3 space-y-1">
                 <div v-for="(users, key) in mappedColumns" :key="key"
                      class="border rounded-lg shadow-md overflow-hidden bg-white dark:bg-gray-800 dark:border-gray-700 hover:shadow-lg transition duration-200 p-2">
@@ -61,13 +65,28 @@
                 </div>
             </div>
         </div>
-
+        <div v-else-if="!error && !loading && event != null && event.cancelled_time != null" class="text-center">
+            <p class="font-bold text-xl text-red-600 dark:text-red-400">
+                {{ trans('events.EventCancelled') }}.
+            </p>
+            <div class="font-bold" v-html="event.cancelled_text"></div>
+            <div class="text-xs">{{ trans('events.CancelledBy :name @ :date', {
+                name: event.cancelled.full_name,
+                date: event.cancelled_time
+ }) }}</div>
+        </div>
         <!-- Ingen events -->
-        <div v-else-if="!loading">
+        <div v-else-if="!error && !loading">
             <p class="text-center text-gray-600 dark:text-gray-400">
                 {{ trans('events.NoEvents') }}.
             </p>
         </div>
+        <AdminsCancelEvent
+            :showCancelModal="showCancelModal"
+            :id="route.params.id"
+            @update:showCancelModal="showCancelModal = $event"
+        />
+
     </div>
 </template>
 
@@ -86,15 +105,52 @@ import EditButton from "../../utils/EditButton.vue";
 import DeleteButton from "../../utils/DeleteButton.vue";
 import RecoverButton from "../../utils/RecoverButton.vue";
 import PermanentButton from "../../utils/PermanentButton.vue";
+import CancelButton from "../../utils/CancelButton.vue";
+import UnCancelButton from "../../utils/UnCancelButton.vue";
+import AdminsCancelEvent from "../../AdminsCancelEvent.vue";
 
 // Reactive tilstander
 const event = ref(null); // Holder data om event fra API
 const loading = ref(true); // Styrer lasteindikatoren
 const error = ref(null); // Viser feilmeldinger ved behov
+const showCancelModal = ref(false);
+
 
 // Router-tilgang
 const route = useRoute();
 const router = useRouter();
+
+function goCancel() {
+    showCancelModal.value = true;
+}
+function goEdit() {
+    //TODO
+}
+
+async function goUncancel() {
+    event.value = null;
+    loading.value = true;
+    try {
+        const response = await axios.post(`/api/admin/events/${route.params.id}/uncancel`);
+    } catch (err) {
+        console.error("Feil under handling:", err.message);
+    } finally {
+        await getEvent();
+    }
+}
+async function goPermanent() {
+    if (confirm(trans('events.permanent_confirm'))) {
+        event.value = null;
+        loading.value = true;
+        try {
+            const response = await axios.post(`/api/admin/events/${route.params.id}/permanent`);
+        } catch (err) {
+            console.error("Feil under handling:", err.message);
+        } finally {
+            await router.push({name: "AdminsEventsIndex"});
+        }
+    }
+}
 
 // Funksjoner for å sjekke brukerroller og status
 async function goRecover() {
@@ -141,15 +197,24 @@ async function goDelete() {
     if (confirm(trans('events.delete_confirm'))) {
         event.value = null;
         loading.value = true;
+        try {
+            const response = await axios.post(`/api/admin/events/${route.params.id}`, {
+                _method: "DELETE"
+            });
+        } catch (err) {
+            console.error("Feil under handling:", err.message);
+        } finally {
+            await getEvent();
+        }
     }
 }
+
 async function getEvent() {
     try {
         const response = await axios.get(`/api/admin/events/${route.params.id}`);
         event.value = response.data;
     } catch (err) {
-        error.value = err.message || "En ukjent feil oppstod.";
-        console.error("Kunne ikke hente event:", error.value);
+        error.value = trans('events.NotFound');
     } finally {
         loading.value = false;
     }
@@ -202,7 +267,7 @@ async function handleEventBeginNow() {
     } catch (err) {
         console.error("Feil under handling:", err.message);
     } finally {
-        getEvent();
+        await getEvent();
     }
 }
 

@@ -18,6 +18,14 @@ class EventsController extends Controller
         $this->eventService = $eventService;
     }
 
+    public function unCancel(Request $request, Event $event){
+        $event->cancelled_time = null;
+        $event->cancelled_text = null;
+        $event->cancelled_by = null;
+        $event->save();
+        return response()->json(['success' => 'Event uncancelled successfully']);
+    }
+
     /**
      * Display a listing of the resource.
      */
@@ -197,7 +205,7 @@ class EventsController extends Controller
      */
     public function show(int $id)
     {
-        return Event::withTrashed()->with('location', 'registered', 'registeredCrew', 'insider', 'insiderCrew', 'attending', 'attendingCrew')->find($id);
+        return Event::withTrashed()->with('cancelled','location', 'registered', 'registeredCrew', 'insider', 'insiderCrew', 'attending', 'attendingCrew')->findOrFail($id);
     }
 
     /**
@@ -227,13 +235,17 @@ class EventsController extends Controller
 
     public function cancel(Request $request,string $event)
     {
-        $validated = $request->validate(['cancelled_text' => ['nullable', 'string', 'min:3', 'max:2048']]);
+        $validated = $request->validate([
+            'cancelled_text' => ['nullable', 'string', 'min:3', 'max:2048'],
+            'notify_crew' => ['nullable', 'boolean'],
+            'notify_guests' => ['nullable', 'boolean'],
+        ]);
         $event = Event::withTrashed()->find($event);
-        $event->cancelled = now();
+        $event->cancelled_time = now();
         $event->cancelled_text = $validated['cancelled_text'];
         $event->cancelled_by = auth()?->user()?->id ?? 8;
         $event->save();
-        return response()->json(['success' => 'Event cancelled successfully']);
+        return response()->json(['success' => 'Event cancelled successfully','event'=>$event]);
     }
 
     public function register(Request $request, Event $event)

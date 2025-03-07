@@ -11,7 +11,11 @@ import {
     faAddressCard,
     faArrowLeft,
     faArrowRight,
-    faBars, faBellConcierge,
+    faBan,
+    faBars,
+    faBell,
+    faBellConcierge,
+    faBellSlash,
     faCalendarPlus,
     faCheck,
     faCheckCircle,
@@ -20,7 +24,8 @@ import {
     faClock,
     faDoorClosed,
     faDoorOpen,
-    faEnvelope, faEraser,
+    faEnvelope,
+    faEraser,
     faEye,
     faEyeSlash,
     faFlagCheckered,
@@ -33,13 +38,15 @@ import {
     faLockOpen,
     faMagnifyingGlass,
     faMapMarker,
-    faPencil, faPenToSquare,
+    faPencil,
+    faPenToSquare,
     faPeoplePulling,
     faPhone,
     faPlayCircle,
     faPlus,
     faQrcode,
-    faRandom, faRegistered,
+    faRandom,
+    faRegistered,
     faRightToBracket,
     faRotateLeft,
     faSave,
@@ -62,33 +69,15 @@ import {
 } from '@fortawesome/free-solid-svg-icons'
 import {faStar as faRegularStar} from '@fortawesome/free-regular-svg-icons';
 import {faGithub, faGoogle} from "@fortawesome/free-brands-svg-icons";
+import {routes} from "./routes.js";
+import {createPinia} from 'pinia';
+import {useUserStore} from "@/stores/userStore.js";
 
-library.add(faUser, faMagnifyingGlass, faEnvelope, faPhone, faMapMarker, faShield, faQrcode, faIdCard, faBars, faTrashCan, faArrowRight, faArrowLeft, faLock, faClock, faCheck, faTrashCanArrowUp, faXmark, faPeoplePulling, faUserPlus, faEye, faEyeSlash, faRightToBracket, faRotateLeft, faInfoCircle, faPlus, faTriangleExclamation, faTrash, faPencil, faStar, faStamp, faRegularStar, faLink, faGoogle, faGithub, faCircleNotch, faPlayCircle, faStopCircle, faCirclePlus, faLockOpen, faSpinner, faSave, faRandom, faUserShield, faSignIn, faGear, faAddressCard, faFlagCheckered, faTimesCircle, faCheckCircle, faCalendarPlus, faDoorOpen, faSkullCrossbones, faIdCardClip, faDoorClosed,faRegistered,faBellConcierge,faPenToSquare,faEraser);
+library.add(faUser, faMagnifyingGlass, faEnvelope, faPhone, faMapMarker, faShield, faQrcode, faIdCard, faBars, faTrashCan, faArrowRight, faArrowLeft, faLock, faClock, faCheck, faTrashCanArrowUp, faXmark, faPeoplePulling, faUserPlus, faEye, faEyeSlash, faRightToBracket, faRotateLeft, faInfoCircle, faPlus, faTriangleExclamation, faTrash, faPencil, faStar, faStamp, faRegularStar, faLink, faGoogle, faGithub, faCircleNotch, faPlayCircle, faStopCircle, faCirclePlus, faLockOpen, faSpinner, faSave, faRandom, faUserShield, faSignIn, faGear, faAddressCard, faFlagCheckered, faTimesCircle, faCheckCircle, faCalendarPlus, faDoorOpen, faSkullCrossbones, faIdCardClip, faDoorClosed, faRegistered, faBellConcierge, faPenToSquare, faEraser, faBan, faBellSlash, faBell);
 axios.defaults.withCredentials = true;
+axios.defaults.headers.common['X-CSRF-TOKEN'] = document.querySelector('meta[name="csrf-token"]').content;
 
-// Define routes
-const routes = [
-    {
-        path: '/signin',
-        name: 'SignIn',
-        component: () => import('./components/pages/Login.vue'), // Lazy load
-    },
-    {
-        path: '/admins/events',
-        name: 'AdminsEventsIndex',
-        component: () => import('./components/pages/admins/EventsIndex.vue'),
-    },
-    {
-        path: '/admins/events/:id',
-        name: 'AdminsEventsShow',
-        component: () => import('./components/pages/admins/EventsShow.vue'),
-    },
-    {
-        path: '/admins/locations/:id',
-        name: 'AdminsLocationsShow',
-        component: () => import('./components/pages/admins/LocationsShow.vue'),
-    },
-];
+const pinia = createPinia();
 
 // Create router
 const router = createRouter({
@@ -97,16 +86,38 @@ const router = createRouter({
 });
 
 // Create and mount the app
-const app = createApp(App)
-    .component('font-awesome-icon', FontAwesomeIcon)
-    .use(i18nVue, {
-        lang: 'no',
-        resolve: async lang => {
-            const langs = import.meta.glob('../../lang/*.json');
-            return await langs[`../../lang/${lang}.json`]();
-        }
-    })
-    .use(router)
-    .use(LaravelPermissionToVueJS);
+(async () => {
+    const pinia = createPinia();
 
-app.mount('#app');
+    // Opprett Vue-instansen, men vent på rolleinitialisering
+    const app = createApp(App)
+        .component('font-awesome-icon', FontAwesomeIcon)
+        .use(i18nVue, {
+            lang: 'no',
+            resolve: async lang => {
+                const langs = import.meta.glob('../../lang/*.json');
+                return await langs[`../../lang/${lang}.json`]();
+            }
+        })
+        .use(pinia);
+
+    const userStore = useUserStore();
+
+    // Vent på at data lastes før resten av applikasjonen fortsetter
+    console.log("Before hydrateUser");
+    await userStore.hydrateUser();
+    console.log("After hydrateUser");
+
+    console.log("Before setting up plugin");
+    app.use(router);
+    app.use(LaravelPermissionToVueJS, {
+        roles: () => window.Laravel.jsPermissions.roles,
+        permissions: () => window.Laravel.jsPermissions.permissions,
+    });
+
+    console.log("jsPermissionToVueJS "+ window.Laravel.jsPermissions.roles);
+    console.log("After setting up plugin");
+
+    app.mount('#app');
+})();
+

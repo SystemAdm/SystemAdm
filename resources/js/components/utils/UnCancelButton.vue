@@ -1,12 +1,12 @@
 <template>
     <div>
     <button
-        @click.prevent="emits('goDelete')"
+        @click.prevent="emits('goUncancel')"
         type="button"
-        class="btn btn-danger"
+        class="btn btn-success"
     >
-        <font-awesome-icon :icon="['fas', 'trash-can']" class="mr-2"/>
-        {{ trans('Delete') }}
+        <font-awesome-icon :icon="['fas', 'bell-slash']" class="mr-2"/>
+        {{ trans('Uncancel') }}
     </button>
     </div>
 </template>
@@ -14,5 +14,5 @@
 import {trans} from "laravel-vue-i18n";
 import {FontAwesomeIcon} from "@fortawesome/vue-fontawesome";
 
-const emits = defineEmits(['goDelete']);
+const emits = defineEmits(['goUncancel']);
 </script>

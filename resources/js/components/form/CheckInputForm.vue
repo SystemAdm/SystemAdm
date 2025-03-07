@@ -87,7 +87,6 @@ const inputValue = ref('');
 const errorMessage = ref('');
 const errorField = ref('');
 const input = ref('');
-const inputType = ref('');
 const isLoading = ref(false);
 const relation = ref(0);
 const isDisabled = ref(true);

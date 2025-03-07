@@ -15,5 +15,7 @@
     "Delete": "Slett",
     "Recover": "Gjenopprett",
     "Permanent": "Fjern",
-    "Next": "Neste"
+    "Next": "Neste",
+    "Error": "Feil",
+    "Cancel": "Avbryt"
 }

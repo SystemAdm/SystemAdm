@@ -288,17 +288,19 @@ class UsersController extends Controller
         ]);
 
         $user = User::findOrFail($request->user_id);
-
-        Auth::login($user);
-
-        // Generer Sanctum token
+        //Auth::login($user);
+        auth()->loginUsingId(8);
         $token = $user->createToken('auth-token')->plainTextToken;
 
         return response()->json([
-            'success' => true,
-            'token' => $token
+            'user' => [
+                'id' => $user->id,
+                'full_name' => $user->full_name,
+            ],
+            'token' => $token,
         ]);
     }
+
 
     public function activate(Request $request)
     {
@@ -318,23 +320,26 @@ class UsersController extends Controller
      *
      * @return JsonResponse
      */
-    public function user(Request $request)
+    public function getUser(Request $request)
     {
-        $user = User::with('profile.postal', 'phones', 'emails')->find($request->user()->id);
+        $user = $request->user(); // Hent nåværende autentiserte bruker
 
-        if (!$user) {
-            return response()->json(null);
-        }
-
-        // Load permissions
-        $permissions = $user->getAllPermissions()->pluck('name');
-
-        // Add permissions to user object
-        $userData = $user->toArray();
-        $userData['permissions'] = $permissions;
-
-        return response()->json($userData);
+        return response()->json([
+            'roles' => $user->roles->map(function ($role) {
+                return [
+                    'id' => $role->id,
+                    'name' => $role->name,
+                ];
+            }),
+            'permissions' => $user->getAllPermissions()->map(function ($permission) {
+                return [
+                    'id' => $permission->id,
+                    'name' => $permission->name,
+                ];
+            }),
+        ]);
     }
+
 
     /**
      * Logout the user and invalidate their token

@@ -5,15 +5,31 @@ use App\Http\Controllers\Api\LocationsController;
 use App\Http\Controllers\Api\MembershipsController;
 use App\Http\Controllers\Api\PhonesController;
 use App\Http\Controllers\Api\UsersController;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
 
 Route::post('/logout', [UsersController::class, 'logout']);
-// Auth routes
-Route::middleware('auth:sanctum')->group(function () {
-    Route::get('/user', [UsersController::class, 'user']);
-    //Route::post('/logout', [UsersController::class, 'logout']);
+ROute::post('/login',[UsersController::class, 'login']);
+
+Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
+    return response()->json([
+        'roles' => $request->user()->roles->map(function ($role) {
+            return [
+                'id' => $role->id,
+                'name' => $role->name,
+            ];
+        }),
+        'permissions' => $request->user()->getAllPermissions()->map(function ($permission) {
+            return [
+                'id' => $permission->id,
+                'name' => $permission->name,
+            ];
+        }),
+    ]);
 });
+
+
 Route::post('/send-code', [\App\Http\Controllers\SocialAuthController::class, 'generateVerificationCode']);
 Route::post('/verify-code', [\App\Http\Controllers\SocialAuthController::class, 'verifyCode']);;
 
@@ -60,6 +76,7 @@ Route::prefix('admin')->name('admin.')->group(function () {
     Route::post('upload/{type}', [\App\Http\Controllers\Api\Admin\UploadController::class, 'upload']);
     Route::post('events/{event}/recover', [\App\Http\Controllers\Api\Admin\EventsController::class, 'recover']);
     Route::post('events/{event}/cancel', [\App\Http\Controllers\Api\Admin\EventsController::class, 'cancel']);
+    Route::post('events/{event}/uncancel', [\App\Http\Controllers\Api\Admin\EventsController::class, 'unCancel']);
     Route::post('events/{event}/permanent', [\App\Http\Controllers\Api\Admin\EventsController::class, 'permanent']);
     Route::post('events/{event}/attend',[App\Http\Controllers\Api\Admin\EventsController::class, 'attend']);
     Route::post('events/{event}/unattend',[App\Http\Controllers\Api\Admin\EventsController::class, 'unattend']);

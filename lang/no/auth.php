@@ -13,7 +13,7 @@ return [
     'invalid_phone' => 'Ugyldig telefonnummer',
     'add_new_name' => 'Legg til nytt navn',
     'select_user' => 'Velg bruker',
-    'back' => 'Tilbake',
+    'login'=> 'Logg inn',
     'user_list_info, :input' => 'Her vises brukere tilknyttet <strong class="dark:text-gray-100 text-gray-800">:input</strong>. Trykk på ditt navn for å gå videre eller opprett ny bruker. Hvis dette ikke er riktig inndata, vennligst gå tilbake med linken under, `Tilbake`.',
     'validate_password_for' => 'Valider passord for :name',
     'enter_password' => 'Fyll inn ditt passord',

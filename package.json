@@ -33,6 +33,7 @@
         "laravel-vue-i18n": "^2.7.8",
         "luxon": "^3.5.0",
         "notiwind": "^2.0.2",
+        "pinia": "^2.3.1",
         "toastr": "^2.1.4",
         "twilio": "^5.3.7",
         "vue-router": "^4.4.5",

@@ -1,7 +1,7 @@
 <template>
-    <div class="flex items-center justify-center min-h-screen ">
+    <div class="flex justify-center items-center h-full">
         <div
-            class="w-full max-w-md p-8  shadow-lg rounded-lg dark:shadow-md text-black dark:text-white bg-white dark:bg-gray-900">
+            class="max-w-md p-8 w-full shadow-lg rounded-lg dark:shadow-md text-black dark:text-white bg-white dark:bg-gray-900">
             <h2 class="text-2xl font-bold text-center">
                 {{ trans('auth.login_title') }}
             </h2>
@@ -38,8 +38,8 @@
                 @goBack="goBack"
                 @goNext="handleVerifyInput"
             />
-            <Choices v-if="currentStep === steps.CHOICES" :selectedUser="selectedUser" :loggedIn="user"
-                     @goBack="goBack"/>
+            <Choices v-if="currentStep === steps.CHOICES" :selectedUser="selectedUser" :loggedIn="loggedIn"
+                     @goBack="goBack" @goLogin="goLogin"/>
             <InputPassword
                 v-if="currentStep === steps.INPUT_PASSWORD"
                 :selectedUser="selectedUser"
@@ -83,9 +83,12 @@
 </template>
 
 <script setup>
-import {inject, ref} from 'vue';
+import {ref} from 'vue';
+import {useRouter} from "vue-router";
 import axios from 'axios';
 import {trans} from 'laravel-vue-i18n';
+import {loginUser, createUser} from "../../services/api.js";
+
 import CheckInputForm from '../form/CheckInputForm.vue';
 import UserList from '../form/UserList.vue';
 import ErrorMessage from '../form/ErrorMessage.vue';
@@ -97,18 +100,24 @@ import InputBirth from "../form/InputBirth.vue";
 import ConfirmRules from "../form/ConfirmRules.vue";
 import Summary from "../form/Summary.vue";
 import Choices from "../form/Choices.vue";
+import {useUserStore} from "@/stores/userStore.js";
 
-//const input = ref('');
-//const guardianInput = ref('');
-//const step = ref(null);
-//const inputType = ref('');
+const router = useRouter();
+const userStore = useUserStore();
+// Reactive data
 const isReset = ref(false);
 const isGuardian = ref(false);
-//const guardianInputType = ref('');
 const back = ref([]);
 const currentStep = ref(1);
-const users = ref({});
+const users = ref([]);
 const guardians = ref({});
+const selectedUser = ref(null);
+const errorMessage = ref('');
+const isLoading = ref(false);
+const innData = ref({ value: '', type: '' });
+const selectedGuardian = ref(null);
+const loggedIn = ref(false);
+
 const steps = {
     INPUT_DATA: 1,
     SELECT_USER: 2,
@@ -124,7 +133,125 @@ const steps = {
     CONFIRM_RULES: 12,
     SUMMARY: 13,
 }
-const selectedUser = ref(null);
+
+const createUserState = ref({
+    given_name: '',
+    family_name: '',
+    additional_name: '',
+    input: '',
+    inputType: '',
+    password: '',
+    password_confirmation: '',
+    birthdate: '',
+    age: 4,
+    verified: false,
+});
+
+const createGuardianState = ref({
+    given_name: '',
+    additional_name: '',
+    family_name: '',
+    input: '',
+    inputType: '',
+});
+
+// Funskjoner
+function goBack() {
+    if (back.value.length > 0) {
+        currentStep.value = back.value.pop();
+    }
+}
+
+function updateStep(nextStep, shouldSaveCurrent = true) {
+    if (shouldSaveCurrent) {
+        back.value.push(currentStep.value);
+    }
+    currentStep.value = nextStep;
+}
+
+async function handleCheckInputForm(values) {
+    innData.value.value = values.innData;
+    innData.value.type = values.inputType;
+
+    if (isGuardian.value) {
+        if (values.step === 'next') {
+            guardians.value = values.users;
+            updateStep(steps.SELECT_GUARDIAN);
+        } else if (values.step === 'new') {
+            createGuardianState.value.input = values.innData;
+            createGuardianState.value.inputType = values.inputType;
+            updateStep(steps.INPUT_GUARDIAN_NAME);
+        }
+    } else {
+        if (values.step === 'next') {
+            users.value = values.users;
+            updateStep(steps.SELECT_USER);
+        } else if (values.step === 'new') {
+            createUserState.value.inputType = values.inputType;
+            createUserState.value.input = values.innData;
+            updateStep(values.step);
+        }
+    }
+}
+
+function handleVerifyInput() {
+    if (isReset.value) {
+        updateStep(steps.INPUT_PASSWORD);
+    } else {
+        createUserState.value.verified = true;
+        updateStep(steps.INPUT_NAME);
+    }
+}
+
+async function handleSummary() {
+    if (!createUserState.value.family_name || !createUserState.value.given_name) {
+        try {
+            isLoading.value = true;
+            const response = await createUser(createUserState.value, createGuardianState.value);
+            console.log("Bruker opprettet:", response.data);
+            updateStep(steps.SUMMARY, false);
+        } catch (error) {
+            handleError(error, trans('auth.error_message'));
+        } finally {
+            isLoading.value = false;
+        }
+    }
+}
+
+async function handleSelectUser(user) {
+    selectedUser.value = user;
+
+    if (selectedUser.value.active) {
+        updateStep(steps.VALIDATE_PASSWORD);
+    } else {
+        updateStep(steps.CHOICES);
+    }
+}
+
+function handleResetPassword() {
+    isReset.value = true;
+    updateStep(steps.VERIFY_INPUT);
+}
+
+function handleError(error, defaultMessage) {
+    errorMessage.value = error.response?.data?.message || defaultMessage;
+    console.error(error);
+}
+
+function goLogin() {
+    userStore.clearUser();
+    loginUser(selectedUser.value.id)
+        .then(() => {
+            loggedIn.value = true;
+            router.push({ name: 'Dashboard' });
+        })
+        .catch((error) => {
+            handleError(error, trans('auth.login_failed_message'));
+        });
+}
+
+
+/*
 const createUser = ref({
     given_name: '',
     family_name: '',
@@ -137,7 +264,6 @@ const createUser = ref({
     age: 4,
     verified: false,
 });
-const selectedGuardian = ref(null);
 const createGuardian = ref({
     given_name: '',
     additional_name: '',
@@ -145,9 +271,7 @@ const createGuardian = ref({
     input: '',
     inputType: '',
 });
-const errorMessage = ref('');
-const isLoading = ref(false);
-const innData = ref({value: '', type: ''});
+const emits = defineEmits(['update']);
 
 function handleConfirmRules() {
     gotoStep(steps.SUMMARY);
@@ -184,47 +308,6 @@ async function handleSummary() {
     }
 }
 
-/*
-async function handleCheckInputGuardianForm(inputValue) {
-    isLoading.value = true;
-    errorMessage.value = '';
-
-    try {
-        const response = await axios.post('/api/users/validate_input', {
-            input: inputValue
-        });
-        const {valid, object, data, innData} = response.data;
-
-        guardianInput.value = innData;
-        guardianInputType.value = object;
-
-        if (valid) {
-            if (data && typeof data === 'object' && Object.keys(data).length > 0) {
-                guardians.value = data;
-                gotoStep(steps.SELECT_GUARDIAN);
-            } else {
-                step.value = 'new_guardian';
-                createGuardian.value.input = innData;
-                createGuardian.value.inputType = object;
-                gotoStep(steps.INPUT_GUARDIAN_NAME);
-            }
-        } else {
-            if (object === 'phone') {
-                errorMessage.value = trans('auth.invalid_phone');
-            } else if (object === 'email') {
-                errorMessage.value = trans('auth.invalid_email');
-            } else {
-                errorMessage.value = trans('auth.invalid_input');
-            }
-        }
-    } catch (error) {
-        errorMessage.value = error.response?.data?.message || trans('auth.error_message');
-        console.error(error);
-    } finally {
-        isLoading.value = false;
-    }
-}
-*/
 function handleResetPassword() {
     isReset.value = true;
     gotoStep(steps.VERIFY_INPUT);
@@ -257,9 +340,14 @@ function handleVerifyInput() {
         gotoStep(steps.INPUT_NAME);
     }
 }
-
+*/
 function handlePasswordValidation() {
-    gotoStep(steps.CHOICES);
+    updateStep(steps.CHOICES);
+}
+/*
+function gotoStep(step) {
+    back.value.push(currentStep.value);
+    currentStep.value = step;
 }
 
 function handleSelectUser(user) {
@@ -306,8 +394,6 @@ async function handleCheckInputForm(values) {
     }
 }
 
-const user = inject('user');
-
 function handleSaveName(names) {
     if (isGuardian.value) {
 
@@ -318,4 +404,12 @@ function handleSaveName(names) {
         gotoStep(steps.INPUT_BIRTH);
     }
 }
+
+function goLogin() {
+    console.log(selectedUser.value);
+    axios.post('/api/login', {user_id: selectedUser.value.id}).then(response => {
+        emits('update');
+        router.push({name: 'Dashboard'});
+    });
+}*/
 </script>

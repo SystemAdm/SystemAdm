@@ -42,9 +42,6 @@ class User extends Authenticatable
 
     protected static function booted(): void
     {
-        static::addGlobalScope('roles', function ($builder) {
-            $builder->with('roles');
-        });
         static::addGlobalScope('profile', function ($builder) {
             $builder->with('profile');
         });

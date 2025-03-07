@@ -24,13 +24,15 @@
 
             <!-- Knapp: Logg inn (hvis brukeren er aktiv) -->
             <div
-                v-if="selectedUser.active === 1 && user === undefined"
-                class="h-32 text-center w-full bg-gray-500 rounded-xl content-center"
+                v-if="selectedUser.active === 1"
+                class="h-32 text-center w-full bg-gray-500 rounded-xl content-center
+hover:bg-gray-600 dark:hover:bg-gray-700 cursor-pointer"
+                @click="login"
             >
                 <div>
-                    <font-awesome-icon :icon="['fas', 'sign-in']"/>
+                    <font-awesome-icon size="2xl" :icon="['fas', 'sign-in']"/>
                 </div>
-                <div>{{ trans('user.login') }}</div>
+                <div>{{ trans('user.signin') }}</div>
             </div>
 
             <!-- Knapp: Opprett bruker (hvis brukeren er inaktiv) -->
@@ -129,11 +131,15 @@ const props = defineProps({
 });
 
 // Emit-events til foreldren
-const emits = defineEmits(['goBack']);
+const emits = defineEmits(['goBack','goLogin']);
 
 // Gå tilbake til forrige steg
 function goBack() {
     emits('goBack'); // Varsler foreldren
+}
+
+function login() {
+    emits("goLogin");
 }
 </script>
 
